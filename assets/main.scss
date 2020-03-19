@@ -1,0 +1,124 @@
+---
+# Only the main Sass file needs front matter (the dashes are enough)
+---
+
+$baseurl: "{{ site.url | append: site.baseurl }}";
+
+@charset "utf-8";
+
+/**
+ * Fonts
+ */
+@font-face {
+    font-family: 'Cerebri Regular';
+    font-style: normal;
+    font-weight: 400;
+    font-display: auto;
+    unicode-range: U+000-5FF;
+    src: url($baseurl + "/assets/fonts/CerebriSansPro-Regular.woff2") format("woff2");
+}
+
+body, html {
+  margin:0;
+  padding:0;
+  width: 100%;
+  height: 100%;
+}
+
+.container {
+  height: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.color-button {
+  margin-top: 16rem;
+  height: fit-content;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.color-button-logo {
+  margin-left: 24px;
+  margin-right: 10px;
+}
+
+.color-button-text {
+  font-family: 'Cerebri Regular', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 2;
+  letter-spacing: .25px;
+
+  padding-top: 10px;
+  padding-bottom: 10px;
+  padding-left: 17px;
+  padding-right: 17px;
+}
+
+.google-logo {
+  background-color: #ffffff;
+  width: 20px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  margin-left: 16px;
+  margin-right: 16px;
+}
+
+/* Pink */
+.pink {
+  background: #ffeee2;
+}
+.pink .color-button {
+  background-color: #ffffff;
+  border: 1px solid #fc9077;
+}
+.pink .color-button:hover {
+  border: 1px solid #f27c61;
+}
+.pink .color-button-text {
+  color: #ffffff;
+  background-color: #fc9077;
+}
+.pink .color-button:hover > .color-button-text {
+  background-color: #f27c61;
+}
+
+/* Blue */
+.blue {
+  background: #e4ecf3;
+}
+.blue .color-button {
+  background-color: #ffffff;
+  border: 1px solid #84b6e3;
+}
+.blue .color-button:hover {
+  border: 1px solid #6aa2d4;
+}
+.blue .color-button-text {
+  color: #ffffff;
+  background-color: #84b6e3;
+}
+.blue .color-button:hover > .color-button-text {
+  background-color: #6aa2d4;
+}
+
+/* Green */
+.green {
+  background: #eaf4f0;
+}
+.green .color-button {
+  background-color: #ffffff;
+  border: 1px solid #6fc6a7;
+}
+.green .color-button:hover {
+  border: 1px solid #51b592;
+}
+.green .color-button-text {
+  color: #ffffff;
+  background-color: #6fc6a7;
+}
+.green .color-button:hover > .color-button-text {
+  background-color: #51b592;
+}

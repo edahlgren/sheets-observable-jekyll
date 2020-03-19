@@ -1,0 +1,14 @@
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>{{ page.title }}</title>
+  <meta name="description" content="{{ page.excerpt }}">
+
+  {% assign relative_url = site.url | append: site.baseurl %}
+  <link rel="stylesheet" type="text/css" href="{{ relative_url | append: '/assets/main.css' }}">
+
+  <link rel="home" href="{{ relative_url | append: '/' }}">
+  <link rel="canonical" href="{{ relative_url | append: page.url }}">
+</head>
