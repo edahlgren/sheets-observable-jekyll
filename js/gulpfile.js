@@ -18,7 +18,7 @@ function bundle(config) {
     .pipe(eslint.failAfterError()) // --> failing if errors
     // ----------- rolling up --------------
     .pipe(rollup({
-      input: "./src/index.js",
+      input: config.entry,
       output: {
         format: config.format,
         name: "app"
@@ -34,26 +34,58 @@ function bundle(config) {
     // ----------- TODO minifying --------------
 }
 
-gulp.task("bundle_iife", function () {
+gulp.task("new_iife", function () {
   process.env.NODE_ENV = "release";
   return bundle({
+    entry: "./src/new/index.js",
     format: "iife",
-    rollup: "index.es2015.js",
-    babel: "index.js"
+    rollup: "new.es2015.js",
+    babel: "new.js"
   });
 });
 
-gulp.task("bundle_esm", function () {
+gulp.task("new_esm", function () {
   process.env.NODE_ENV = "release";
   return bundle({
+    entry: "./src/new/index.js",
     format: "esm",
-    rollup: "index.esm.es2015.js",
-    babel: "index.esm.js"
+    rollup: "new.esm.es2015.js",
+    babel: "new.esm.js"
   });
 });
 
-gulp.task("default", gulp.parallel('bundle_iife', 'bundle_esm'));
+gulp.task("report_iife", function () {
+  process.env.NODE_ENV = "release";
+  return bundle({
+    entry: "./src/report/index.js",
+    format: "iife",
+    rollup: "report.es2015.js",
+    babel: "report.js"
+  });
+});
+
+gulp.task("report_esm", function () {
+  process.env.NODE_ENV = "release";
+  return bundle({
+    entry: "./src/report/index.js",
+    format: "esm",
+    rollup: "report.esm.es2015.js",
+    babel: "report.esm.js"
+  });
+});
+
+gulp.task("default", gulp.parallel(
+  'new_iife',
+  'new_esm',
+  'report_iife',
+  'report_esm'
+));
 
 gulp.task("watch", function () {
-    gulp.watch("./src/**/*.js", gulp.parallel('bundle_iife', 'bundle_esm'));
+    gulp.watch("./src/**/*.js", gulp.parallel(
+      'new_iife',
+      'new_esm',
+      'report_iife',
+      'report_esm'
+    ));
 });

@@ -4,13 +4,27 @@ layout: default
 
 {% assign relative_url = site.url | append: site.baseurl %}
 
-<div id="app-container" class="container pink" data-color="pink">
+<div id="new-container" class="new-container">
 
-  <div id="color-button" class="color-button">
-    <img class="google-logo color-button-logo" alt="Google sign-in" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/512px-Google_%22G%22_Logo.svg.png" />
-    <div id="color-button-text" class="color-button-text">
-      Change Color
+  <div class="new-submit-container">
+    <div class="new-submit-desc">
+      Visualize a Google Spreadsheet
     </div>
+    <form id="new-submit-bar" class="new-submit-bar" autocomplete="off">
+      <img class="new-google-logo" alt="Google logo" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/512px-Google_%22G%22_Logo.svg.png" />
+      <input type="text" name="url" id="spreadsheet-url" class="new-spreadsheet-url" placeholder="Spreadsheet URL (https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFM...)" required>
+      <div id="submit-spreadsheet" class="new-submit-spreadsheet">&#8594;</div>
+    </form>
+  </div>
+
+  <div id="general-help" class="help-message message-text">
+    <p class="help-paragraph">Copy and paste a Google spreadsheet URL into the box above and click the &#8594; button.</p>
+    <p class="help-paragraph mt-0.5">Or choose one of the example spreadsheets below.</p>
+  </div>
+
+  <div id="url-issue" class="help-message message-text hidden">
+    <p class="help-paragraph">Woops, that's not a Google spreadsheet URL.</p>
+    <p class="help-paragraph mt-0.5">Try using one of your <a class="help-link" target="_blank" rel="noopener noreferrer" href="https://docs.google.com/spreadsheets/u/0/">your Google spreadsheets</a>. Or choose an example spreadsheet below.</p>
   </div>
 
 </div>
