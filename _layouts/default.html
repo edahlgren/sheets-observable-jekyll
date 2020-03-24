@@ -8,8 +8,10 @@
 
     {% assign relative_url = site.url | append: site.baseurl %}
     {% if page.js %}
-    <script type="module" src="{{ relative_url | append: page.js_module }}"></script>
-    <script nomodule type="text/javascript" src="{{ relative_url | append: page.js_file }}"></script>
+    <script type="text/javascript" src="{{ relative_url | append: page.js }}"></script>
+    {% endif %}
+    {% if page.runtime %}
+    <script type="text/javascript" src="{{ relative_url | append: '/assets/js/runtime.js' }}"></script>
     {% endif %}
   </body>
 </html>

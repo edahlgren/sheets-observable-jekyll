@@ -1,0 +1,40 @@
+---
+layout: default
+---
+
+{% assign relative_url = site.url | append: site.baseurl %}
+
+<div id="plot-container" class="plot-container">
+  <div id="plot-processing" class="plot-processing">
+    <img class="loading-dots" alt="Loading" src="/assets/images/dots.gif" />
+  </div>
+
+  <div id="plot" class="plot hidden">
+    <div class="plot-header">
+      <div class="plot-header-buttons">
+        <div id="download-button" class="download-svg-button plot-header-button">
+          <div class="plot-header-text">Download image</div>
+        </div>
+        <div id="embed-button" class="embed-button plot-header-button">
+          <div class="plot-header-text">Embed in Sheets or Slides</div>
+        </div>
+      </div>
+      <div class="plot-top-options">
+        <div class="top-option">New</div>
+        <div class="top-option">Saved</div>
+        <div class="top-option">Settings</div>
+      </div>
+    </div>
+
+    <div class="plot-spreadsheet-title">
+      <span id="plot-spreadsheet-title"></span>
+      <a id="plot-spreadsheet-url" class="plot-spreadsheet-url" target="_blank" rel="noopener noreferrer">&#8599;</a>
+    </div>
+    <div id="plot-title" class="plot-title"></div>
+    <div id="plot-help" class="plot-help">
+      This is a blurb that explains what's going on. Read more below.
+    </div>
+    <div id="actual-plot" class="actual-plot"></div>
+    <div id="plot-selected-data" class="plot-selected-data"></div>
+  </div>
+</div>

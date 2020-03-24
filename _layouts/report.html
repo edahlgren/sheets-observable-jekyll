@@ -9,7 +9,7 @@ layout: default
   <div class="report-header">
     <form id="report-submit-bar" class="report-submit-bar" autocomplete="off">
       <img class="report-google-logo" alt="Google logo" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/512px-Google_%22G%22_Logo.svg.png" />
-      <input type="text" name="url" id="spreadsheet-url" class="report-spreadsheet-url" required>
+      <input type="text" name="url" id="spreadsheet-url" class="input-spreadsheet-url" placeholder="Visualize a new spreadsheet" required>
       <div id="submit-spreadsheet" class="report-submit-spreadsheet">&#8594;</div>
     </form>
 
@@ -19,7 +19,7 @@ layout: default
     </div>
   </div>
 
-  <div id="processing" class="processing">
+  <div id="report-processing" class="report-processing">
     <!-- Step 1 -->
     <div id="processing-step-access" class="processing-step inactive">
       <svg class="processing-circle" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
@@ -40,13 +40,7 @@ layout: default
         </div>
       </div>
     </div>
-    <div id="access-issue" class="help-message message-text hidden">
-      <p class="help-paragraph">This is a spreadsheet that you don't have access to.</p>
-      <p class="help-paragraph mt-0.5">Try another spreadsheet or choose one of the example spreadsheets.</p>
-    </div>
-    <div id="google-issue-step-1" class="help-message message-text hidden">
-      <p class="help-paragraph">There's an issue with Google at the moment. Unfortunately that means that this spreadsheet can't be visualized right now. The best thing to do is to wait 15 minutes and try again. This type of issue normally resolves quickly on its own.</p>
-    </div>
+    <div id="issue-step-1" class="issue-step hidden"></div>
 
     <!-- Step 2 -->
     <div id="processing-step-fields" class="processing-step inactive">
@@ -55,20 +49,16 @@ layout: default
       </svg>
       <div class="processing-text">Analyzing spreadsheet fields</div>
     </div>
-    <div id="no-fields-sheet-issue" class="help-message message-text hidden">
-      <p class="help-paragraph">Temporary issue: Use a spreadsheet that has at least one sheet that ends in ".fields" that describes the fields of another sheet.</p>
-    </div>
-    <div id="google-issue-step-2" class="help-message message-text hidden">
-      <p class="help-paragraph">There's an issue with Google at the moment. Unfortunately that means that this spreadsheet can't be visualized right now. The best thing to do is to wait 15 minutes and try again. This type of issue normally resolves quickly on its own.</p>
-    </div>
+    <div id="issue-step-2" class="issue-step hidden"></div>
 
     <!-- Step 3 -->
     <div id="processing-step-choose" class="processing-step inactive">
       <svg class="processing-circle" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
         <circle cx="50" cy="50" r="50"/>
       </svg>
-      <div class="processing-text">Choosing visualizations</div>
+      <div class="processing-text">Choosing designs</div>
     </div>
+    <div id="issue-step-3" class="issue-step hidden"></div>
 
     <!-- Step 4 -->
     <div id="processing-step-load" class="processing-step inactive">
@@ -77,25 +67,22 @@ layout: default
       </svg>
       <div class="processing-text">Loading data</div>
     </div>
-    <div id="google-issue-step-4" class="help-message message-text hidden">
-      <p class="help-paragraph">There's an issue with Google at the moment. Unfortunately that means that this spreadsheet can't be visualized right now. The best thing to do is to wait 15 minutes and try again. This type of issue normally resolves quickly on its own.</p>
-    </div>
+    <div id="issue-step-4" class="issue-step hidden"></div>
 
     <!-- Step 5 -->
     <div id="processing-step-render" class="processing-step inactive">
       <svg class="processing-circle" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
         <circle cx="50" cy="50" r="50"/>
       </svg>
-      <div class="processing-text">Rendering</div>
+      <div class="processing-text">Rendering visualizations</div>
     </div>
-
+    <div id="issue-step-5" class="issue-step hidden"></div>
   </div>
 
   <div id="report" class="report hidden">
     <div class="report-spreadsheet-title">
       <span id="report-spreadsheet-title"></span>
-      <a id="report-spreadsheet-url" class="report-spreadsheet-url" target="_blank" rel="noopener noreferrer">↗</a>
+      <a id="report-spreadsheet-url" class="report-spreadsheet-url" target="_blank" rel="noopener noreferrer">&#8599;</a>
     </div>
-    <div id="report-plots" class="plots"></div>
   </div>
 </div>

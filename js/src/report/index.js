@@ -1,36 +1,44 @@
-import { parseSpreadsheetUrl, makeSpreadsheetUrl, getGoogleApi } from '../google.js';
+// Imports ------------------------------------
+
+import { makeSpreadsheetUrl, accessSpreadsheet, getData } from "../google.js";
+import errors from "../errors.js";
+import steps from "./steps.js";
+import {
+  choose_single_sheet,
+  organize_fields,
+  choose_designs,
+  match_header_to_fields,
+  render_visualizations
+} from "./processing.js";
 
 // DOM ----------------------------------------
 
-function element(id) {
-  return document.getElementById(id);
-}
-
 // Top submit new spreadsheet bar
-var spreadsheet_submit = element("submit-spreadsheet"),
-    spreadsheet_input = element("spreadsheet-url");
+var spreadsheet_submit = document.getElementById("submit-spreadsheet"),
+    spreadsheet_input = document.getElementById("spreadsheet-url");
 
 // Processing steps
-var step_access = element("processing-step-access"),
-    step_fields = element("processing-step-fields"),
-    step_choose = element("processing-step-choose"),
-    step_load = element("processing-step-load"),
-    step_render = element("processing-step-render");
+var step_access = document.getElementById("processing-step-access"),
+    step_fields = document.getElementById("processing-step-fields"),
+    step_choose = document.getElementById("processing-step-choose"),
+    step_load = document.getElementById("processing-step-load"),
+    step_render = document.getElementById("processing-step-render");
 
 // Sign in message
-var authorize_message = element("authorize-container"),
-    signin_button = element("signin");
+var authorize_message = document.getElementById("authorize-container"),
+    signin_button = document.getElementById("signin");
 
-// Not your spreadsheet message
-var access_message = element("access-issue");
+// Containers for processing and report
+var processing = document.getElementById("report-processing"),
+    report = document.getElementById("report");
 
-// Issue on Google's end
-var google_issue_step1 = element("google-issue-step-1"),
-    google_issue_step2 = element("google-issue-step-2"),
-    google_issue_step4 = element("google-issue-step-4");
+// Execute ------------------------------------
 
-// No sheet that ends in ".fields"
-var fields_sheet_message = element("no-fields-sheet-issue");
+// TODO: Cancel and re-process on submitting new URL
+var spreadsheetId = refresh_id();
+if (spreadsheetId) {
+  process(spreadsheetId, steps.ACCESS_SPREADSHEET_BEFORE_AUTH);
+}
 
 // Initialize top bar ------------------------
 
@@ -46,15 +54,13 @@ function query_var(variable) {
   return "";
 }
 
-function match_query_with_input() {
+function refresh_id() {
   var id = query_var("id");
   if (id.length == 0) {
-    return;
+    return null;
   }
-  spreadsheet_input.value = makeSpreadsheetUrl(id);
+  return id;
 }
-
-match_query_with_input();
 
 // Define the processing steps ---------------
 
@@ -67,20 +73,20 @@ function make_auth(on_signin) {
   };
 }
 
-const ACCESS_SPREADSHEET_BEFORE_AUTH = 0,
-      ACCESS_SPREADSHEET_AFTER_AUTH = 1;
-
 async function process(id, step) {
+  console.log("starting processing with", "[" + id + "]");
+
   var auth = null,
       metadata = null,
       fields = null,
+      designs = null,
       data = null;
 
   // Make auth config (signin / signout buttons)
   auth = make_auth({
     afterAuth: function() {
       authorize_message.classList.add("hidden");
-      process(id, ACCESS_SPREADSHEET_AFTER_AUTH);
+      process(id, steps.ACCESS_SPREADSHEET_AFTER_AUTH);
     }
   });
 
@@ -88,63 +94,89 @@ async function process(id, step) {
   step_access.classList.remove("inactive");
 
   try {
-    metadata = await access_spreadsheet(auth, id);
+    metadata = await accessSpreadsheet(auth, id);
   } catch (error) {
-    if (error == errors.GOOGLE_SPREADSHEET_UNAUTHORIZED) {
-      if (step == ACCESS_SPREADSHEET_BEFORE_AUTH) {
-        authorize_message.classList.remove("hidden");
-        return;
-      }
-      access_message.classList.remove("hidden");
-      return;
-    }
-    google_issue_step1.classList.remove("hidden");
+    console.log("[error: access spreadsheet]", error);
+    steps.show_help(step, error);
     return;
   }
-
 
   // Step 2: Choose a sheet & parse its fields
   step_fields.classList.remove("inactive");
 
+  step = steps.CHOOSE_SPREADSHEET;
   var sheet = choose_single_sheet(metadata.sheets);
   if (!sheet) {
-    fields_sheet_message.classList.remove("hidden");
+    steps.show_help(step);
     return;
   }
+
+  step = steps.READ_FIELDS_DATA;
   try {
-    fields = await get_data(auth, id, sheet + ".fields");
+    fields = await getData(auth, id, sheet + ".fields");
   } catch (error) {
-    google_issue_step2.classList.remove("hidden");
+    steps.show_help(step, error);
     return;
   }
 
+  step = steps.ORGANIZE_FIELDS_DATA;
+  fields = organize_fields(fields);
+  if (fields.isMalformed) {
+    steps.show_help(step);
+    return;
+  }
 
+  // Step 3: Choose and download visualization code
+  step_choose.classList.remove("inactive");
+
+  step = steps.CHOOSE_VISUALIZATIONS;
+  try {
+    designs = await choose_designs(fields);
+  } catch (error) {
+    steps.show_help(step, error);
+    return;
+  }
+
+  // Step 4: Loading data
+  step_load.classList.remove("inactive");
+
+  step = steps.DOWNLOAD_DATA;
+  try {
+    data = await getData(auth, id, sheet);
+  } catch (error) {
+    steps.show_help(step, error);
+    return;
+  }
+
+  step = steps.MATCH_HEADER_TO_FIELDS;
+  fields = match_header_to_fields(fields, data[0]);
+  if (!fields) {
+    steps.show_help(step);
+    return;
+  }
+
+  // Step 4: Loading data
+  step_render.classList.remove("inactive");
+
+  step = steps.RENDER_VISUALIZATIONS;
+  try {
+    await render_visualizations({
+      root: report,
+      id: id,
+      sheet: sheet,
+      title: metadata.properties.title,
+      url: metadata.spreadsheetUrl,
+      fields: fields,
+      visualizations: designs,
+      data: data
+    });
+  } catch (error) {
+    steps.show_help(step, error);
+    return;
+  }
+
+  setTimeout(function() {
+    processing.classList.add("hidden");
+    report.classList.remove("hidden");
+  }, 500);
 }
-
-function access_spreadsheet(auth, id) {
-  return new Promise(function(resolve, reject) {
-    getGoogleApi(auth).then(function(api) {
-      api.getSpreadsheetMetadata(id).then(function(response) {
-        resolve(response.result);
-      }).catch(reject);
-    }).catch(reject);
-  });
-}
-
-function get_data(auth, id, sheet) {
-  return new Promise(function(resolve, reject) {
-    getGoogleApi(auth).then(function(api) {
-      api.getSpreadsheetValues(id, sheet).then(function(response) {
-        resolve(response.result.values);
-      }).catch(reject);
-    }).catch(reject);
-  });
-}
-
-// Step 2: Finding structure
-
-// Step 3: Choosing visualizations
-
-// Step 4: Loading data_table
-
-// Step 5: Rendering

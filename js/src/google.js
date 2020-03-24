@@ -1,3 +1,4 @@
+import loadScript from './loadScript.js';
 import errors from './errors.js';
 
 // Google constants
@@ -10,24 +11,12 @@ const clientId = '610692011464-m1oi9ddi7u31h92e09lg5s970luvak9a.apps.googleuserc
         "https://www.googleapis.com/auth/spreadsheets.readonly"
       ];
 
-function loadScript(url) {
-  return new Promise(function(resolve, reject) {
-    const script = document.createElement('script');
-
-    script.onload = function() { resolve(); };
-    script.onerror = reject;
-    script.src = url;
-    script.async = true;
-    script.type = 'text/javascript';
-    document.head.appendChild(script);
-  });
-}
-
 function load_script() {
   return new Promise(function(resolve, reject) {
     loadScript(
       "https://apis.google.com/js/api.js"
     ).then(resolve).catch(function(error) {
+      console.log("[error: load script]", error);
       reject(errors.SCRIPT_DOWNLOAD_ERROR);
     });
   });
@@ -38,6 +27,7 @@ function load_client() {
     gapi.load('client:auth2', {
       callback: resolve,
       onerror: function(error) {
+        console.log("[error: load auth2 client]", error);
         reject(errors.GOOGLE_CLIENT_LOAD_ERROR);
       }
     });
@@ -52,6 +42,7 @@ function init_client() {
       discoveryDocs: discoveryDocs,
       scope: scopes.join(' ')
     }).then(resolve).catch(function(error) {
+      console.log("[error: init client]", error);
       reject(errors.GOOGLE_CLIENT_INIT_ERROR);
     });
   });
@@ -72,7 +63,7 @@ function initialize() {
 function setup_auth(config) {
   var clicked = null;
   var update = function(isSignedIn) {
-    if (clicked.afterAuth) {
+    if (clicked && clicked.afterAuth) {
       clicked.afterAuth();
     }
     clicked = null;
@@ -161,6 +152,26 @@ function get_api(auth_config) {
   });
 }
 
+function get_data(auth, id, sheet) {
+  return new Promise(function(resolve, reject) {
+    get_api(auth).then(function(api) {
+      api.getSpreadsheetValues(id, sheet).then(function(response) {
+        resolve(response.result.values);
+      }).catch(reject);
+    }).catch(reject);
+  });
+}
+
+function access_spreadsheet(auth, id) {
+  return new Promise(function(resolve, reject) {
+    get_api(auth).then(function(api) {
+      api.getSpreadsheetMetadata(id).then(function(response) {
+        resolve(response.result);
+      }).catch(reject);
+    }).catch(reject);
+  });
+}
+
 // Helper functions, no API needed
 export { is_spreadsheet_url as isSpreadsheetUrl };
 export { spreadsheet_id as parseSpreadsheetUrl };
@@ -168,3 +179,5 @@ export { spreadsheet_url as makeSpreadsheetUrl };
 
 // Using the Google Sheets API
 export { get_api as getGoogleApi };
+export { get_data as getData };
+export { access_spreadsheet as accessSpreadsheet };
