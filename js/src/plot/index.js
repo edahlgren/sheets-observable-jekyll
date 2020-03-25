@@ -36,17 +36,79 @@ function query_vars() {
 var qvars = query_vars(),
     id = qvars.get("id"),
     sheet = qvars.get("sheet"),
+    plot_number = qvars.get("pn"),
     visualization = qvars.get("v");
 
 console.log("[spreadsheet " + id + "]",
             "[sheet " + sheet + "]",
+            "[plot number " + plot_number + "]",
             "[visualization " + visualization + "]");
 
-load_visualization();
+// Load the visualization from a tab ------------
 
-// Load the visualization ----------------------
+var request_channel = new BroadcastChannel("request_channel:" + id + ":" + sheet),
+    request_timeout = null;
 
-async function load_visualization() {
+var response_channel_name = "response_channel:" + id + ":" + sheet + ":" + plot_number,
+    response_channel = new BroadcastChannel(response_channel_name);
+
+response_channel.onmessage = function(e) {
+  console.log("View received message:", e.data);
+
+  switch (e.data.type) {
+  case "ResourceResponse":
+    window.clearTimeout(request_timeout);
+    close_response_channel();
+
+    if (!e.data.params.hasResource) {
+      load_from_scratch();
+    } else {
+      load_from_message(e.data.params);
+    }
+    break;
+
+  default:
+    console.log("Can't handle message:", e);
+  }
+}
+
+function close_response_channel() {
+  request_channel.postMessage({
+    type: "CloseChannel",
+    params: {
+      response_channel: response_channel_name
+    }
+  });
+}
+
+function request_plot() {
+  request_channel.postMessage({
+    type: "ResourceRequest",
+    params: {
+      response_channel: response_channel_name,
+      plot_number: plot_number
+    }
+  });
+  request_timeout = window.setTimeout(load_from_scratch, 200);
+}
+
+function load_from_message(msg) {
+  plot_spreadsheet_title.textContent = msg.spreadsheet.title;
+  plot_spreadsheet_link.href = msg.spreadsheet.url;
+
+  plot_title.textContent = msg.title;
+  actual_plot.innerHTML = msg.resource;
+
+  plot.classList.remove("hidden");
+}
+
+request_plot();
+
+// Load the visualization from scratch ----------
+
+async function load_from_scratch() {
+  processing.classList.remove("hidden");
+
   try {
     await __load_visualization();
   } catch (error) {

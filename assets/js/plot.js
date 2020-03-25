@@ -3076,54 +3076,111 @@
 	var qvars = query_vars(),
 	    id$1 = qvars.get("id"),
 	    sheet = qvars.get("sheet"),
+	    plot_number = qvars.get("pn"),
 	    visualization = qvars.get("v");
-	console.log("[spreadsheet " + id$1 + "]", "[sheet " + sheet + "]", "[visualization " + visualization + "]");
-	load_visualization(); // Load the visualization ----------------------
+	console.log("[spreadsheet " + id$1 + "]", "[sheet " + sheet + "]", "[plot number " + plot_number + "]", "[visualization " + visualization + "]"); // Load the visualization from a tab ------------
 
-	function load_visualization() {
-	  return _load_visualization.apply(this, arguments);
+	var request_channel = new BroadcastChannel("request_channel:" + id$1 + ":" + sheet),
+	    request_timeout = null;
+	var response_channel_name = "response_channel:" + id$1 + ":" + sheet + ":" + plot_number,
+	    response_channel = new BroadcastChannel(response_channel_name);
+
+	response_channel.onmessage = function (e) {
+	  console.log("View received message:", e.data);
+
+	  switch (e.data.type) {
+	    case "ResourceResponse":
+	      window.clearTimeout(request_timeout);
+	      close_response_channel();
+
+	      if (!e.data.params.hasResource) {
+	        load_from_scratch();
+	      } else {
+	        load_from_message(e.data.params);
+	      }
+
+	      break;
+
+	    default:
+	      console.log("Can't handle message:", e);
+	  }
+	};
+
+	function close_response_channel() {
+	  request_channel.postMessage({
+	    type: "CloseChannel",
+	    params: {
+	      response_channel: response_channel_name
+	    }
+	  });
 	}
 
-	function _load_visualization() {
-	  _load_visualization = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
+	function request_plot() {
+	  request_channel.postMessage({
+	    type: "ResourceRequest",
+	    params: {
+	      response_channel: response_channel_name,
+	      plot_number: plot_number
+	    }
+	  });
+	  request_timeout = window.setTimeout(load_from_scratch, 200);
+	}
+
+	function load_from_message(msg) {
+	  plot_spreadsheet_title.textContent = msg.spreadsheet.title;
+	  plot_spreadsheet_link.href = msg.spreadsheet.url;
+	  plot_title.textContent = msg.title;
+	  actual_plot.innerHTML = msg.resource;
+	  plot.classList.remove("hidden");
+	}
+
+	request_plot(); // Load the visualization from scratch ----------
+
+	function load_from_scratch() {
+	  return _load_from_scratch.apply(this, arguments);
+	}
+
+	function _load_from_scratch() {
+	  _load_from_scratch = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
 	    return regeneratorRuntime.wrap(function _callee$(_context) {
 	      while (1) {
 	        switch (_context.prev = _context.next) {
 	          case 0:
-	            _context.prev = 0;
-	            _context.next = 3;
+	            processing.classList.remove("hidden");
+	            _context.prev = 1;
+	            _context.next = 4;
 	            return __load_visualization();
 
-	          case 3:
-	            _context.next = 9;
+	          case 4:
+	            _context.next = 10;
 	            break;
 
-	          case 5:
-	            _context.prev = 5;
-	            _context.t0 = _context["catch"](0);
+	          case 6:
+	            _context.prev = 6;
+	            _context.t0 = _context["catch"](1);
 	            console.log("[error]", _context.t0);
 	            return _context.abrupt("return");
 
-	          case 9:
+	          case 10:
 	            processing.classList.add("hidden");
 	            plot.classList.remove("hidden");
 
-	          case 11:
+	          case 12:
 	          case "end":
 	            return _context.stop();
 	        }
 	      }
-	    }, _callee, null, [[0, 5]]);
+	    }, _callee, null, [[1, 6]]);
 	  }));
-	  return _load_visualization.apply(this, arguments);
+	  return _load_from_scratch.apply(this, arguments);
 	}
 
 	function __load_visualization() {
-	  return _load_visualization2.apply(this, arguments);
+	  return _load_visualization.apply(this, arguments);
 	}
 
-	function _load_visualization2() {
-	  _load_visualization2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
+	function _load_visualization() {
+	  _load_visualization = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
 	    var auth, metadata, vars, data, svg, sheets, vspec, input;
 	    return regeneratorRuntime.wrap(function _callee2$(_context2) {
 	      while (1) {
@@ -3237,7 +3294,7 @@
 	      }
 	    }, _callee2, null, [[1, 7], [17, 21], [25, 31], [35, 39], [43, 50]]);
 	  }));
-	  return _load_visualization2.apply(this, arguments);
+	  return _load_visualization.apply(this, arguments);
 	}
 
 }());

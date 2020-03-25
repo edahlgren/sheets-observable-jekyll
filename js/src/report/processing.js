@@ -174,6 +174,7 @@ async function render_visualizations(config) {
   });
 
   // Render each visualization
+  var pn = 1;
   for (var i = 0; i < config.visualizations.length; i++) {
     var v = config.visualizations[i];
     console.log("visualization", v);
@@ -202,6 +203,7 @@ async function render_visualizations(config) {
       // Make the plot url
       var url = "/plot?id=" + config.id +
                 "&sheet=" + config.sheet +
+                "&pn=" + pn +
                 "&v=" + v.type;
       var extraQueryVars = v.makeQueryVars(iter, config.fields);
       if (extraQueryVars.length > 0) {
@@ -209,10 +211,13 @@ async function render_visualizations(config) {
       }
 
       // Put the plot into a DOM element
-      var plot = format_plot(url, n, titles, svg);
+      var plot = format_plot(pn, url, n, titles, svg);
 
       // Add the plot element to the container
       plots.appendChild(plot);
+
+      // Increment the plot number
+      pn += 1;
     }
 
     // Add the plot to the root
@@ -241,7 +246,7 @@ function choose_n(num_iterations) {
   return 4;
 }
 
-function format_plot(url, n, titles, svg) {
+function format_plot(plot_number, url, n, titles, svg) {
   // Create <div class="svg-overlay"><p>Expand</p></div>
   var overlay = document.createElement("div");
   overlay.classList.add("report-svg-overlay");
@@ -253,6 +258,7 @@ function format_plot(url, n, titles, svg) {
 
   // Create <div class="svg-wrap">
   var wrap = document.createElement("a");
+  wrap.id = "pn-" + plot_number;
   wrap.classList.add("report-svg-wrap");
   wrap.href = url;
   wrap.target = "_blank";

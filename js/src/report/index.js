@@ -32,6 +32,11 @@ var authorize_message = document.getElementById("authorize-container"),
 var processing = document.getElementById("report-processing"),
     report = document.getElementById("report");
 
+// Request channels ---------------------------
+
+var request_channel = null,
+    response_channels = new Map();
+
 // Execute ------------------------------------
 
 // TODO: Cancel and re-process on submitting new URL
@@ -176,7 +181,98 @@ async function process(id, step) {
   }
 
   setTimeout(function() {
-    processing.classList.add("hidden");
-    report.classList.remove("hidden");
+    finish(id, sheet);
   }, 500);
+}
+
+function finish(id, sheet) {
+  request_channel = new BroadcastChannel("request_channel:" + spreadsheetId + ":" + sheet);
+  request_channel.onmessage = handle_channel_request;
+
+  processing.classList.add("hidden");
+  report.classList.remove("hidden");
+}
+
+function handle_channel_request(e) {
+  console.log("Report received message:", e.data);
+
+  switch (e.data.type) {
+  case "CloseChannel":
+    var response_channel_name = e.data.params.response_channel,
+        response_channel = response_channels.get(response_channel_name);
+
+    if (response_channel) {
+      response_channels.delete(response_channel_name);
+      response_channel.close();
+    }
+    break;
+
+  case "ResourceRequest":
+    var response_channel_name = e.data.params.response_channel,
+        response_channel = response_channels.get(response_channel_name);
+
+    if (!response_channel) {
+      response_channel = new BroadcastChannel(response_channel_name);
+      response_channels.set(response_channel_name, response_channel);
+    }
+
+    var plot = get_plot_from_report(e.data.params.plot_number);
+    if (!plot) {
+      response_channel.postMessage({
+        type: "ResourceResponse",
+        params: {
+          hasResource: false
+        }
+      });
+    } else {
+      response_channel.postMessage({
+        type: "ResourceResponse",
+        params: {
+          hasResource: true,
+          spreadsheet: get_spreadsheet_info(),
+          title: plot.title,
+          resource: plot.svg.outerHTML
+        }
+      });
+    }
+    break;
+
+  default:
+    console.log("Can't handle message:", e);
+  }
+}
+
+function get_spreadsheet_info() {
+  return {
+    title: document.getElementById("report-spreadsheet-title").textContent,
+    url: document.getElementById("report-spreadsheet-url").href
+  };
+}
+
+function join_titles(collection) {
+  var output = [];
+  for (var i = 0; i < collection.length; i++) {
+    var div = collection.item(i);
+    output.push(div.textContent);
+  }
+  return output.join(" ");
+}
+
+function get_plot_from_report(plot_number) {
+  var link = document.getElementById("pn-" + plot_number);
+  if (!link) {
+    return null;
+  }
+  var svg = link.querySelector("svg");
+  if (!svg) {
+    return null;
+  }
+  var titles = link.getElementsByClassName("report-plot-title");
+  if (titles.length == 0) {
+    return null;
+  }
+  return {
+    title: join_titles(titles),
+    svg: svg
+  };
 }
