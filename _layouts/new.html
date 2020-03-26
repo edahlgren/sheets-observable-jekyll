@@ -12,19 +12,55 @@ layout: default
     </div>
     <form id="new-submit-bar" class="new-submit-bar" autocomplete="off">
       <img class="new-google-logo" alt="Google logo" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/512px-Google_%22G%22_Logo.svg.png" />
-      <input type="text" name="url" id="spreadsheet-url" class="new-spreadsheet-url" placeholder="Spreadsheet URL (https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFM...)" required>
+      <input type="text" name="url" id="spreadsheet-url" class="new-spreadsheet-url" placeholder="Google Spreadsheet URL" required>
       <div id="submit-spreadsheet" class="new-submit-spreadsheet">&#8594;</div>
     </form>
   </div>
 
   <div id="general-help" class="help-message message-text">
-    <p class="help-paragraph">Copy and paste a Google spreadsheet URL into the box above and click the &#8594; button.</p>
-    <p class="help-paragraph mt-0.5">Or choose one of the example spreadsheets below.</p>
+    <p class="help-paragraph">Choose one of the sample Google spreadsheets below. Then click the &#8594; button to visualize it.</p>
   </div>
 
   <div id="url-issue" class="help-message message-text hidden">
-    <p class="help-paragraph">Woops, that's not a Google spreadsheet URL.</p>
-    <p class="help-paragraph mt-0.5">Try using one of your <a class="help-link" target="_blank" rel="noopener noreferrer" href="https://docs.google.com/spreadsheets/u/0/">your Google spreadsheets</a>. Or choose an example spreadsheet below.</p>
+    <p class="help-paragraph">In the future, you'll be able to visualize any Google spreadsheet URL. But for this early preview, choose one of the Google spreadsheets below.</p>
+  </div>
+
+  <div class="spreadsheet-examples">
+    <div class="spreadsheet-example spreadsheet-example-bordered" data-url="https://docs.google.com/spreadsheets/d/1yUcomatgF0k_P5derVYRHxLIq_B789sClN8VFXVJJBs/edit#gid=1411464532">
+      <div class="spreadsheet-example-desc">
+        <div class="spreadsheet-example-title">Vintage Cars from 1970-1982</div>
+        <a href="https://docs.google.com/spreadsheets/d/1yUcomatgF0k_P5derVYRHxLIq_B789sClN8VFXVJJBs/edit#gid=1411464532" target="_blank" class="spreadsheet-example-view">
+          View spreadsheet <img src="/assets/images/expand.png" />
+        </a>
+      </div>
+      <div class="spreadsheet-example-buttons">
+        <div class="spreadsheet-example-choose">Choose</div>
+      </div>
+    </div>
+
+    <div class="spreadsheet-example spreadsheet-example-bordered" data-url="https://docs.google.com/spreadsheets/d/1yUcomatgF0k_P5derVYRHxLIq_B789sClN8VFXVJJBs/edit#gid=1411464532">
+      <div class="spreadsheet-example-desc">
+        <div class="spreadsheet-example-title">Major League Baseball from 2000-2017</div>
+        <a href="" target="_blank" class="spreadsheet-example-view">
+          View spreadsheet <img src="/assets/images/expand.png" />
+        </a>
+      </div>
+      <div class="spreadsheet-example-buttons">
+        <div class="spreadsheet-example-choose">Choose</div>
+      </div>
+    </div>
+
+    <div class="spreadsheet-example" data-url="https://docs.google.com/spreadsheets/d/1yUcomatgF0k_P5derVYRHxLIq_B789sClN8VFXVJJBs/edit#gid=1411464532">
+      <div class="spreadsheet-example-desc">
+        <div class="spreadsheet-example-title">Diabetes Monitoring of 70 patients</div>
+        <a href="" target="_blank" class="spreadsheet-example-view">
+          View spreadsheet <img src="/assets/images/expand.png" />
+        </a>
+      </div>
+      <div class="spreadsheet-example-buttons">
+        <div class="spreadsheet-example-choose">Choose</div>
+      </div>
+    </div>
   </div>
 
 </div>

@@ -1,22 +1,31 @@
-import { isSpreadsheetUrl, parseSpreadsheetUrl } from '../google.js';
-
-function element(id) {
-  return document.getElementById(id);
-}
+import { parseSpreadsheetUrl } from '../google.js';
 
 // Submit spreadsheet url button
-var spreadsheet_submit = element("submit-spreadsheet"),
-    spreadsheet_input = element("spreadsheet-url");
+var spreadsheet_submit = document.getElementById("submit-spreadsheet"),
+    spreadsheet_input = document.getElementById("spreadsheet-url");
 
-var general_help = element("general-help"),
-    url_issue = element("url-issue");
+var general_help = document.getElementById("general-help"),
+    url_issue = document.getElementById("url-issue");
+
+var allowed_spreadsheet_urls = new Set();
+var examples = document.getElementsByClassName("spreadsheet-example");
+
+// Setup buttons and urls for each example
+for (var i = 0; i < examples.length; i++) {
+  var example = examples.item(i);
+  allowed_spreadsheet_urls.add(example.dataset.url);
+
+  var choose = example.querySelector(".spreadsheet-example-choose");
+  choose.onclick = function(event) {
+    spreadsheet_input.value = example.dataset.url;
+  };
+}
 
 // Handle submitting the spreadsheet
 spreadsheet_submit.onclick = function(event) {
-
-  // Check for a spreadsheet url
+  // Check for an allowed spreadsheet url
   var url = spreadsheet_input.value;
-  if (!isSpreadsheetUrl(url)) {
+  if (!allowed_spreadsheet_urls.has(url)) {
     return show_help();
   }
 

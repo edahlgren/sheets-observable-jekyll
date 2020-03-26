@@ -615,6 +615,54 @@
 	    : (B = _cof(O)) == 'Object' && typeof O.callee == 'function' ? 'Arguments' : B;
 	};
 
+	// 19.1.3.6 Object.prototype.toString()
+
+	var test = {};
+	test[_wks('toStringTag')] = 'z';
+	if (test + '' != '[object z]') {
+	  _redefine(Object.prototype, 'toString', function toString() {
+	    return '[object ' + _classof(this) + ']';
+	  }, true);
+	}
+
+	// true  -> String#at
+	// false -> String#codePointAt
+	var _stringAt = function (TO_STRING) {
+	  return function (that, pos) {
+	    var s = String(_defined(that));
+	    var i = _toInteger(pos);
+	    var l = s.length;
+	    var a, b;
+	    if (i < 0 || i >= l) return TO_STRING ? '' : undefined;
+	    a = s.charCodeAt(i);
+	    return a < 0xd800 || a > 0xdbff || i + 1 === l || (b = s.charCodeAt(i + 1)) < 0xdc00 || b > 0xdfff
+	      ? TO_STRING ? s.charAt(i) : a
+	      : TO_STRING ? s.slice(i, i + 2) : (a - 0xd800 << 10) + (b - 0xdc00) + 0x10000;
+	  };
+	};
+
+	var $at = _stringAt(true);
+
+	// 21.1.3.27 String.prototype[@@iterator]()
+	_iterDefine(String, 'String', function (iterated) {
+	  this._t = String(iterated); // target
+	  this._i = 0;                // next index
+	// 21.1.5.2.1 %StringIteratorPrototype%.next()
+	}, function () {
+	  var O = this._t;
+	  var index = this._i;
+	  var point;
+	  if (index >= O.length) return { value: undefined, done: true };
+	  point = $at(O, index);
+	  this._i += point.length;
+	  return { value: point, done: false };
+	});
+
+	var _redefineAll = function (target, src, safe) {
+	  for (var key in src) _redefine(target, key, src[key], safe);
+	  return target;
+	};
+
 	var _anInstance = function (it, Constructor, name, forbiddenField) {
 	  if (!(it instanceof Constructor) || (forbiddenField !== undefined && forbiddenField in it)) {
 	    throw TypeError(name + ': incorrect invocation!');
@@ -673,14 +721,397 @@
 	exports.RETURN = RETURN;
 	});
 
+	var SPECIES = _wks('species');
+
+	var _setSpecies = function (KEY) {
+	  var C = _global[KEY];
+	  if (_descriptors && C && !C[SPECIES]) _objectDp.f(C, SPECIES, {
+	    configurable: true,
+	    get: function () { return this; }
+	  });
+	};
+
+	var _meta = createCommonjsModule(function (module) {
+	var META = _uid('meta');
+
+
+	var setDesc = _objectDp.f;
+	var id = 0;
+	var isExtensible = Object.isExtensible || function () {
+	  return true;
+	};
+	var FREEZE = !_fails(function () {
+	  return isExtensible(Object.preventExtensions({}));
+	});
+	var setMeta = function (it) {
+	  setDesc(it, META, { value: {
+	    i: 'O' + ++id, // object ID
+	    w: {}          // weak collections IDs
+	  } });
+	};
+	var fastKey = function (it, create) {
+	  // return primitive with prefix
+	  if (!_isObject(it)) return typeof it == 'symbol' ? it : (typeof it == 'string' ? 'S' : 'P') + it;
+	  if (!_has(it, META)) {
+	    // can't set metadata to uncaught frozen object
+	    if (!isExtensible(it)) return 'F';
+	    // not necessary to add metadata
+	    if (!create) return 'E';
+	    // add missing metadata
+	    setMeta(it);
+	  // return object ID
+	  } return it[META].i;
+	};
+	var getWeak = function (it, create) {
+	  if (!_has(it, META)) {
+	    // can't set metadata to uncaught frozen object
+	    if (!isExtensible(it)) return true;
+	    // not necessary to add metadata
+	    if (!create) return false;
+	    // add missing metadata
+	    setMeta(it);
+	  // return hash weak collections IDs
+	  } return it[META].w;
+	};
+	// add metadata on freeze-family methods calling
+	var onFreeze = function (it) {
+	  if (FREEZE && meta.NEED && isExtensible(it) && !_has(it, META)) setMeta(it);
+	  return it;
+	};
+	var meta = module.exports = {
+	  KEY: META,
+	  NEED: false,
+	  fastKey: fastKey,
+	  getWeak: getWeak,
+	  onFreeze: onFreeze
+	};
+	});
+	var _meta_1 = _meta.KEY;
+	var _meta_2 = _meta.NEED;
+	var _meta_3 = _meta.fastKey;
+	var _meta_4 = _meta.getWeak;
+	var _meta_5 = _meta.onFreeze;
+
+	var _validateCollection = function (it, TYPE) {
+	  if (!_isObject(it) || it._t !== TYPE) throw TypeError('Incompatible receiver, ' + TYPE + ' required!');
+	  return it;
+	};
+
+	var dP$1 = _objectDp.f;
+
+
+
+
+
+
+
+
+
+	var fastKey = _meta.fastKey;
+
+	var SIZE = _descriptors ? '_s' : 'size';
+
+	var getEntry = function (that, key) {
+	  // fast case
+	  var index = fastKey(key);
+	  var entry;
+	  if (index !== 'F') return that._i[index];
+	  // frozen object case
+	  for (entry = that._f; entry; entry = entry.n) {
+	    if (entry.k == key) return entry;
+	  }
+	};
+
+	var _collectionStrong = {
+	  getConstructor: function (wrapper, NAME, IS_MAP, ADDER) {
+	    var C = wrapper(function (that, iterable) {
+	      _anInstance(that, C, NAME, '_i');
+	      that._t = NAME;         // collection type
+	      that._i = _objectCreate(null); // index
+	      that._f = undefined;    // first entry
+	      that._l = undefined;    // last entry
+	      that[SIZE] = 0;         // size
+	      if (iterable != undefined) _forOf(iterable, IS_MAP, that[ADDER], that);
+	    });
+	    _redefineAll(C.prototype, {
+	      // 23.1.3.1 Map.prototype.clear()
+	      // 23.2.3.2 Set.prototype.clear()
+	      clear: function clear() {
+	        for (var that = _validateCollection(this, NAME), data = that._i, entry = that._f; entry; entry = entry.n) {
+	          entry.r = true;
+	          if (entry.p) entry.p = entry.p.n = undefined;
+	          delete data[entry.i];
+	        }
+	        that._f = that._l = undefined;
+	        that[SIZE] = 0;
+	      },
+	      // 23.1.3.3 Map.prototype.delete(key)
+	      // 23.2.3.4 Set.prototype.delete(value)
+	      'delete': function (key) {
+	        var that = _validateCollection(this, NAME);
+	        var entry = getEntry(that, key);
+	        if (entry) {
+	          var next = entry.n;
+	          var prev = entry.p;
+	          delete that._i[entry.i];
+	          entry.r = true;
+	          if (prev) prev.n = next;
+	          if (next) next.p = prev;
+	          if (that._f == entry) that._f = next;
+	          if (that._l == entry) that._l = prev;
+	          that[SIZE]--;
+	        } return !!entry;
+	      },
+	      // 23.2.3.6 Set.prototype.forEach(callbackfn, thisArg = undefined)
+	      // 23.1.3.5 Map.prototype.forEach(callbackfn, thisArg = undefined)
+	      forEach: function forEach(callbackfn /* , that = undefined */) {
+	        _validateCollection(this, NAME);
+	        var f = _ctx(callbackfn, arguments.length > 1 ? arguments[1] : undefined, 3);
+	        var entry;
+	        while (entry = entry ? entry.n : this._f) {
+	          f(entry.v, entry.k, this);
+	          // revert to the last existing entry
+	          while (entry && entry.r) entry = entry.p;
+	        }
+	      },
+	      // 23.1.3.7 Map.prototype.has(key)
+	      // 23.2.3.7 Set.prototype.has(value)
+	      has: function has(key) {
+	        return !!getEntry(_validateCollection(this, NAME), key);
+	      }
+	    });
+	    if (_descriptors) dP$1(C.prototype, 'size', {
+	      get: function () {
+	        return _validateCollection(this, NAME)[SIZE];
+	      }
+	    });
+	    return C;
+	  },
+	  def: function (that, key, value) {
+	    var entry = getEntry(that, key);
+	    var prev, index;
+	    // change existing entry
+	    if (entry) {
+	      entry.v = value;
+	    // create new entry
+	    } else {
+	      that._l = entry = {
+	        i: index = fastKey(key, true), // <- index
+	        k: key,                        // <- key
+	        v: value,                      // <- value
+	        p: prev = that._l,             // <- previous entry
+	        n: undefined,                  // <- next entry
+	        r: false                       // <- removed
+	      };
+	      if (!that._f) that._f = entry;
+	      if (prev) prev.n = entry;
+	      that[SIZE]++;
+	      // add to index
+	      if (index !== 'F') that._i[index] = entry;
+	    } return that;
+	  },
+	  getEntry: getEntry,
+	  setStrong: function (C, NAME, IS_MAP) {
+	    // add .keys, .values, .entries, [@@iterator]
+	    // 23.1.3.4, 23.1.3.8, 23.1.3.11, 23.1.3.12, 23.2.3.5, 23.2.3.8, 23.2.3.10, 23.2.3.11
+	    _iterDefine(C, NAME, function (iterated, kind) {
+	      this._t = _validateCollection(iterated, NAME); // target
+	      this._k = kind;                     // kind
+	      this._l = undefined;                // previous
+	    }, function () {
+	      var that = this;
+	      var kind = that._k;
+	      var entry = that._l;
+	      // revert to the last existing entry
+	      while (entry && entry.r) entry = entry.p;
+	      // get next entry
+	      if (!that._t || !(that._l = entry = entry ? entry.n : that._t._f)) {
+	        // or finish the iteration
+	        that._t = undefined;
+	        return _iterStep(1);
+	      }
+	      // return step by kind
+	      if (kind == 'keys') return _iterStep(0, entry.k);
+	      if (kind == 'values') return _iterStep(0, entry.v);
+	      return _iterStep(0, [entry.k, entry.v]);
+	    }, IS_MAP ? 'entries' : 'values', !IS_MAP, true);
+
+	    // add [@@species], 23.1.2.2, 23.2.2.2
+	    _setSpecies(NAME);
+	  }
+	};
+
+	var ITERATOR$4 = _wks('iterator');
+	var SAFE_CLOSING = false;
+
+	try {
+	  var riter = [7][ITERATOR$4]();
+	  riter['return'] = function () { SAFE_CLOSING = true; };
+	  // eslint-disable-next-line no-throw-literal
+	  Array.from(riter, function () { throw 2; });
+	} catch (e) { /* empty */ }
+
+	var _iterDetect = function (exec, skipClosing) {
+	  if (!skipClosing && !SAFE_CLOSING) return false;
+	  var safe = false;
+	  try {
+	    var arr = [7];
+	    var iter = arr[ITERATOR$4]();
+	    iter.next = function () { return { done: safe = true }; };
+	    arr[ITERATOR$4] = function () { return iter; };
+	    exec(arr);
+	  } catch (e) { /* empty */ }
+	  return safe;
+	};
+
+	var f$1 = {}.propertyIsEnumerable;
+
+	var _objectPie = {
+		f: f$1
+	};
+
+	var gOPD = Object.getOwnPropertyDescriptor;
+
+	var f$2 = _descriptors ? gOPD : function getOwnPropertyDescriptor(O, P) {
+	  O = _toIobject(O);
+	  P = _toPrimitive(P, true);
+	  if (_ie8DomDefine) try {
+	    return gOPD(O, P);
+	  } catch (e) { /* empty */ }
+	  if (_has(O, P)) return _propertyDesc(!_objectPie.f.call(O, P), O[P]);
+	};
+
+	var _objectGopd = {
+		f: f$2
+	};
+
+	// Works with __proto__ only. Old v8 can't work with null proto objects.
+	/* eslint-disable no-proto */
+
+
+	var check = function (O, proto) {
+	  _anObject(O);
+	  if (!_isObject(proto) && proto !== null) throw TypeError(proto + ": can't set as prototype!");
+	};
+	var _setProto = {
+	  set: Object.setPrototypeOf || ('__proto__' in {} ? // eslint-disable-line
+	    function (test, buggy, set) {
+	      try {
+	        set = _ctx(Function.call, _objectGopd.f(Object.prototype, '__proto__').set, 2);
+	        set(test, []);
+	        buggy = !(test instanceof Array);
+	      } catch (e) { buggy = true; }
+	      return function setPrototypeOf(O, proto) {
+	        check(O, proto);
+	        if (buggy) O.__proto__ = proto;
+	        else set(O, proto);
+	        return O;
+	      };
+	    }({}, false) : undefined),
+	  check: check
+	};
+
+	var setPrototypeOf = _setProto.set;
+	var _inheritIfRequired = function (that, target, C) {
+	  var S = target.constructor;
+	  var P;
+	  if (S !== C && typeof S == 'function' && (P = S.prototype) !== C.prototype && _isObject(P) && setPrototypeOf) {
+	    setPrototypeOf(that, P);
+	  } return that;
+	};
+
+	var _collection = function (NAME, wrapper, methods, common, IS_MAP, IS_WEAK) {
+	  var Base = _global[NAME];
+	  var C = Base;
+	  var ADDER = IS_MAP ? 'set' : 'add';
+	  var proto = C && C.prototype;
+	  var O = {};
+	  var fixMethod = function (KEY) {
+	    var fn = proto[KEY];
+	    _redefine(proto, KEY,
+	      KEY == 'delete' ? function (a) {
+	        return IS_WEAK && !_isObject(a) ? false : fn.call(this, a === 0 ? 0 : a);
+	      } : KEY == 'has' ? function has(a) {
+	        return IS_WEAK && !_isObject(a) ? false : fn.call(this, a === 0 ? 0 : a);
+	      } : KEY == 'get' ? function get(a) {
+	        return IS_WEAK && !_isObject(a) ? undefined : fn.call(this, a === 0 ? 0 : a);
+	      } : KEY == 'add' ? function add(a) { fn.call(this, a === 0 ? 0 : a); return this; }
+	        : function set(a, b) { fn.call(this, a === 0 ? 0 : a, b); return this; }
+	    );
+	  };
+	  if (typeof C != 'function' || !(IS_WEAK || proto.forEach && !_fails(function () {
+	    new C().entries().next();
+	  }))) {
+	    // create collection constructor
+	    C = common.getConstructor(wrapper, NAME, IS_MAP, ADDER);
+	    _redefineAll(C.prototype, methods);
+	    _meta.NEED = true;
+	  } else {
+	    var instance = new C();
+	    // early implementations not supports chaining
+	    var HASNT_CHAINING = instance[ADDER](IS_WEAK ? {} : -0, 1) != instance;
+	    // V8 ~  Chromium 40- weak-collections throws on primitives, but should return false
+	    var THROWS_ON_PRIMITIVES = _fails(function () { instance.has(1); });
+	    // most early implementations doesn't supports iterables, most modern - not close it correctly
+	    var ACCEPT_ITERABLES = _iterDetect(function (iter) { new C(iter); }); // eslint-disable-line no-new
+	    // for early implementations -0 and +0 not the same
+	    var BUGGY_ZERO = !IS_WEAK && _fails(function () {
+	      // V8 ~ Chromium 42- fails only with 5+ elements
+	      var $instance = new C();
+	      var index = 5;
+	      while (index--) $instance[ADDER](index, index);
+	      return !$instance.has(-0);
+	    });
+	    if (!ACCEPT_ITERABLES) {
+	      C = wrapper(function (target, iterable) {
+	        _anInstance(target, C, NAME);
+	        var that = _inheritIfRequired(new Base(), target, C);
+	        if (iterable != undefined) _forOf(iterable, IS_MAP, that[ADDER], that);
+	        return that;
+	      });
+	      C.prototype = proto;
+	      proto.constructor = C;
+	    }
+	    if (THROWS_ON_PRIMITIVES || BUGGY_ZERO) {
+	      fixMethod('delete');
+	      fixMethod('has');
+	      IS_MAP && fixMethod('get');
+	    }
+	    if (BUGGY_ZERO || HASNT_CHAINING) fixMethod(ADDER);
+	    // weak collections should not contains .clear method
+	    if (IS_WEAK && proto.clear) delete proto.clear;
+	  }
+
+	  _setToStringTag(C, NAME);
+
+	  O[NAME] = C;
+	  _export(_export.G + _export.W + _export.F * (C != Base), O);
+
+	  if (!IS_WEAK) common.setStrong(C, NAME, IS_MAP);
+
+	  return C;
+	};
+
+	var SET = 'Set';
+
+	// 23.2 Set Objects
+	var es6_set = _collection(SET, function (get) {
+	  return function Set() { return get(this, arguments.length > 0 ? arguments[0] : undefined); };
+	}, {
+	  // 23.2.3.1 Set.prototype.add(value)
+	  add: function add(value) {
+	    return _collectionStrong.def(_validateCollection(this, SET), value = value === 0 ? 0 : value, value);
+	  }
+	}, _collectionStrong);
+
 	// 7.3.20 SpeciesConstructor(O, defaultConstructor)
 
 
-	var SPECIES = _wks('species');
+	var SPECIES$1 = _wks('species');
 	var _speciesConstructor = function (O, D) {
 	  var C = _anObject(O).constructor;
 	  var S;
-	  return C === undefined || (S = _anObject(C)[SPECIES]) == undefined ? D : _aFunction(S);
+	  return C === undefined || (S = _anObject(C)[SPECIES$1]) == undefined ? D : _aFunction(S);
 	};
 
 	// fast apply, http://jsperf.lnkit.com/fast-apply/5
@@ -863,12 +1294,12 @@
 	  this.reject = _aFunction(reject);
 	}
 
-	var f$1 = function (C) {
+	var f$3 = function (C) {
 	  return new PromiseCapability(C);
 	};
 
 	var _newPromiseCapability = {
-		f: f$1
+		f: f$3
 	};
 
 	var _perform = function (exec) {
@@ -890,44 +1321,6 @@
 	  var resolve = promiseCapability.resolve;
 	  resolve(x);
 	  return promiseCapability.promise;
-	};
-
-	var _redefineAll = function (target, src, safe) {
-	  for (var key in src) _redefine(target, key, src[key], safe);
-	  return target;
-	};
-
-	var SPECIES$1 = _wks('species');
-
-	var _setSpecies = function (KEY) {
-	  var C = _global[KEY];
-	  if (_descriptors && C && !C[SPECIES$1]) _objectDp.f(C, SPECIES$1, {
-	    configurable: true,
-	    get: function () { return this; }
-	  });
-	};
-
-	var ITERATOR$4 = _wks('iterator');
-	var SAFE_CLOSING = false;
-
-	try {
-	  var riter = [7][ITERATOR$4]();
-	  riter['return'] = function () { SAFE_CLOSING = true; };
-	  // eslint-disable-next-line no-throw-literal
-	  Array.from(riter, function () { throw 2; });
-	} catch (e) { /* empty */ }
-
-	var _iterDetect = function (exec, skipClosing) {
-	  if (!skipClosing && !SAFE_CLOSING) return false;
-	  var safe = false;
-	  try {
-	    var arr = [7];
-	    var iter = arr[ITERATOR$4]();
-	    iter.next = function () { return { done: safe = true }; };
-	    arr[ITERATOR$4] = function () { return iter; };
-	    exec(arr);
-	  } catch (e) { /* empty */ }
-	  return safe;
 	};
 
 	var task = _task.set;
@@ -1206,23 +1599,7 @@
 	  }
 	});
 
-	// 19.1.3.6 Object.prototype.toString()
-
-	var test = {};
-	test[_wks('toStringTag')] = 'z';
-	if (test + '' != '[object z]') {
-	  _redefine(Object.prototype, 'toString', function toString() {
-	    return '[object ' + _classof(this) + ']';
-	  }, true);
-	}
-
 	var url_header = 'https://docs.google.com/spreadsheets/d/';
-	var re1 = /https\:\/\/docs\.google\.com\/spreadsheets\/d\/[\w\d]+\/.*/,
-	    re2 = /https\:\/\/docs\.google\.com\/spreadsheets\/d\/[\w\d]+/;
-
-	function is_spreadsheet_url(url) {
-	  return re1.test(url) || re2.test(url);
-	}
 
 	function spreadsheet_id(url) {
 	  var start = url_header.length,
@@ -1231,21 +1608,29 @@
 	  return url.substring(start, end);
 	}
 
-	function element(id) {
-	  return document.getElementById(id);
-	} // Submit spreadsheet url button
+	var spreadsheet_submit = document.getElementById("submit-spreadsheet"),
+	    spreadsheet_input = document.getElementById("spreadsheet-url");
+	var general_help = document.getElementById("general-help"),
+	    url_issue = document.getElementById("url-issue");
+	var allowed_spreadsheet_urls = new Set();
+	var examples = document.getElementsByClassName("spreadsheet-example"); // Setup buttons and urls for each example
 
+	for (var i$1 = 0; i$1 < examples.length; i$1++) {
+	  var example = examples.item(i$1);
+	  allowed_spreadsheet_urls.add(example.dataset.url);
+	  var choose = example.querySelector(".spreadsheet-example-choose");
 
-	var spreadsheet_submit = element("submit-spreadsheet"),
-	    spreadsheet_input = element("spreadsheet-url");
-	var general_help = element("general-help"),
-	    url_issue = element("url-issue"); // Handle submitting the spreadsheet
+	  choose.onclick = function (event) {
+	    spreadsheet_input.value = example.dataset.url;
+	  };
+	} // Handle submitting the spreadsheet
+
 
 	spreadsheet_submit.onclick = function (event) {
-	  // Check for a spreadsheet url
+	  // Check for an allowed spreadsheet url
 	  var url = spreadsheet_input.value;
 
-	  if (!is_spreadsheet_url(url)) {
+	  if (!allowed_spreadsheet_urls.has(url)) {
 	    return show_help();
 	  } // Parse the spreadsheet id from the url
 

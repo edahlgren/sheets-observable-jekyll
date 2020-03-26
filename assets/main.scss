@@ -26,7 +26,7 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   font-family: 'Source Sans Pro', sans-serif;
   font-size: 14px;
   font-weight: 300;
-  line-height: 2;
+  line-height: 1.8;
   letter-spacing: 1px;
   color: #000000;
 }
@@ -37,8 +37,8 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
 
 .help-message {
   background: #f2f8fa;
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
   padding-top: 1.5rem;
   padding-bottom: 1.5rem;
   padding-left: 2rem;
@@ -52,14 +52,15 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
 
 .new-container {
   width: 90%;
-  max-width: 850px;
+  max-width: 750px;
   margin-top: 2rem;
   margin-right: auto;
   margin-left: auto;
+  margin-bottom: 24rem;
 }
 
 .new-submit-container {
-  margin-top: 15rem;
+  margin-top: 12rem;
 }
 
 .new-submit-desc {
@@ -131,11 +132,86 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   color: #5d8391;
 }
 
+.spreadsheet-example {
+  display: flex;
+  justify-content: space-between;
+
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+  padding-left: 2rem;
+  padding-right: 3rem;
+
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.spreadsheet-example-bordered {
+  border-bottom: 1px solid #e6e6e6;
+}
+
+.spreadsheet-example-desc {
+  width: 60%;
+}
+
+.spreadsheet-example-title {
+  font-family: 'Cerebri Regular', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 2;
+  letter-spacing: 1px;
+  color: #000000;
+}
+
+.spreadsheet-example-buttons {
+  display: flex;
+  align-items: center;
+  width: fit-content;
+}
+
+.spreadsheet-example-choose {
+  font-family: 'Cerebri Regular', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 2;
+  letter-spacing: .5px;
+
+  text-align: center;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 16px;
+  padding-right: 16px;
+  margin-bottom: 0.5rem;
+
+  background-color: #f0f5f7;
+  color: #000000;
+  cursor: pointer;
+}
+
+.spreadsheet-example-choose:hover {
+  background-color: #e9f0f2;
+}
+
+.spreadsheet-example-view {
+  font-family: 'Cerebri Regular', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 2;
+  letter-spacing: .5px;
+  color: #aaaaaa;
+  text-decoration: none;
+}
+
+.spreadsheet-example-view img {
+  width: 11px;
+  margin-left: 4px;
+}
+
 .report-container {
   width: 90%;
   max-width: 900px;
   margin-right: auto;
   margin-left: auto;
+  margin-bottom: 24rem;
 }
 
 .report-header {
@@ -185,6 +261,33 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
 
 .input-spreadsheet-url::placeholder {
   color: #303030;
+}
+
+.report-new-button {
+  display: flex;
+  align-items: center;
+}
+
+.report-new-text {
+  font-family: 'Cerebri Regular', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 2;
+  letter-spacing: .5px;
+
+  text-align: center;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 16px;
+  padding-right: 16px;
+
+  background-color: #f0f5f7;
+  color: #666666;
+  cursor: pointer;
+}
+
+.report-new-text:hover {
+  background-color: #e9f0f2;
 }
 
 .report-submit-spreadsheet {
@@ -267,31 +370,35 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
 }
 
 .report {
-  margin-top: 4rem;
+  margin-top: 6rem;
 }
 
 .report-spreadsheet-title {
   font-family: 'Cerebri Regular', sans-serif;
   font-size: 18px;
   font-weight: 400;
-  line-height: 2;
+  line-height: 1.5;
   letter-spacing: 1px;
-  color: #666666;
-  margin-bottom: 3rem;
+  color: #000000;
 }
 
 .report-spreadsheet-url {
-  margin-left: 8px;
-  text-decoration: none;
+  font-family: 'Cerebri Regular', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 2;
+  letter-spacing: .5px;
   color: #aaaaaa;
+  text-decoration: none;
 }
 
-.report-spreadsheet-url:hover {
-  color: #999999;
+.report-spreadsheet-url img {
+  margin-left: 4px;
+  width: 11px;
 }
 
 .report-plots-container {
-  margin-top: 2rem;
+  margin-top: 4rem;
   margin-bottom: 4rem;
   display: flex;
   justify-content: start;
@@ -366,6 +473,7 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   max-width: 800px;
   margin-right: auto;
   margin-left: auto;
+  margin-bottom: 24rem;
 }
 
 .plot-processing {

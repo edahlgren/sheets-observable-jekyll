@@ -7,11 +7,18 @@ layout: default
 <div id="report-container" class="report-container">
 
   <div class="report-header">
+
+    <div id="report-new-button" class="report-new-button">
+      <div class="report-new-text">Visualize another spreadsheet</div>
+    </div>
+
+    <!--
     <form id="report-submit-bar" class="report-submit-bar" autocomplete="off">
       <img class="report-google-logo" alt="Google logo" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/512px-Google_%22G%22_Logo.svg.png" />
       <input type="text" name="url" id="spreadsheet-url" class="input-spreadsheet-url" placeholder="Visualize a new spreadsheet" required>
       <div id="submit-spreadsheet" class="report-submit-spreadsheet">&#8594;</div>
     </form>
+    -->
 
     <div class="report-top-options">
       <div class="top-option">Saved</div>
@@ -80,9 +87,9 @@ layout: default
   </div>
 
   <div id="report" class="report hidden">
-    <div class="report-spreadsheet-title">
-      <span id="report-spreadsheet-title"></span>
-      <a id="report-spreadsheet-url" class="report-spreadsheet-url" target="_blank" rel="noopener noreferrer">&#8599;</a>
-    </div>
+    <div id="report-spreadsheet-title" class="report-spreadsheet-title"></div>
+    <a id="report-spreadsheet-url" class="report-spreadsheet-url" target="_blank" rel="noopener noreferrer">
+      View spreadsheet <img src="/assets/images/expand.png" />
+    </a>
   </div>
 </div>
