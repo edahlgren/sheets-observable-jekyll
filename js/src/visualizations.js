@@ -31,8 +31,6 @@ function make_query_vars_xy(i, fields) {
 }
 
 function parse_vars_xy(query_vars, header) {
-  console.log("query vars", query_vars, "header", header);
-
   var x = query_vars.get("x"),
       y = query_vars.get("y"),
       x_desc = query_vars.get("xlabel"),

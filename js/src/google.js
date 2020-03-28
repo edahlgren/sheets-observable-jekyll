@@ -48,11 +48,25 @@ function init_client() {
   });
 }
 
-function initialize() {
+function initialize(loader) {
   return new Promise(function(resolve, reject) {
+    if (loader) {
+      loader.desc.textContent = "Loading apis";
+    }
     load_script().then(function() {
+      if (loader) {
+        loader.bar.style.width = 10 + "%";
+        loader.desc.textContent = "Initializing";
+      }
       load_client().then(function() {
+        if (loader) {
+          loader.bar.style.width = 20 + "%";
+          loader.desc.textContent = "Authenticating";
+        }
         init_client().then(function() {
+          if (loader) {
+            loader.bar.style.width = 30 + "%";
+          }
           resolve();
         }).catch(reject);
       }).catch(reject);
@@ -125,26 +139,34 @@ var api = {
     return gapi.auth2.getAuthInstance().isSignedIn.get();
   },
   getSpreadsheetMetadata: function(id) {
-    return gapi.client.sheets.spreadsheets.get({
-      spreadsheetId: id
+    return new Promise(function(resolve, reject) {
+      gapi.client.sheets.spreadsheets.get({
+        spreadsheetId: id
+      }).then(function(response) {
+        resolve(response.result);
+      }).catch(reject);
     });
   },
   getSpreadsheetValues: function(id, range) {
-    return gapi.client.sheets.spreadsheets.values.get({
-      spreadsheetId: id,
-      range: range
+    return new Promise(function(resolve, reject) {
+      gapi.client.sheets.spreadsheets.values.get({
+        spreadsheetId: id,
+        range: range
+      }).then(function(response) {
+        resolve(response.result.values);
+      }).catch(reject);
     });
   }
 };
 
 // Whether the client has been initialized or not
 var initialized = false;
-function get_api(auth_config) {
+function get_api(auth_config, loader) {
   return new Promise(function(resolve, reject) {
     if (initialized) {
-      resolve(api);
+      return resolve(api);
     }
-    initialize().then(function() {
+    initialize(loader).then(function(timing) {
       setup_auth(auth_config);
       initialized = true;
       resolve(api);
@@ -155,9 +177,7 @@ function get_api(auth_config) {
 function get_data(auth, id, sheet) {
   return new Promise(function(resolve, reject) {
     get_api(auth).then(function(api) {
-      api.getSpreadsheetValues(id, sheet).then(function(response) {
-        resolve(response.result.values);
-      }).catch(reject);
+      api.getSpreadsheetValues(id, sheet).then(resolve).catch(reject);
     }).catch(reject);
   });
 }
@@ -165,9 +185,7 @@ function get_data(auth, id, sheet) {
 function access_spreadsheet(auth, id) {
   return new Promise(function(resolve, reject) {
     get_api(auth).then(function(api) {
-      api.getSpreadsheetMetadata(id).then(function(response) {
-        resolve(response.result);
-      }).catch(reject);
+      api.getSpreadsheetMetadata(id).then(resolve).catch(reject);
     }).catch(reject);
   });
 }

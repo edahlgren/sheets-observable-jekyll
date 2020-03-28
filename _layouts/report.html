@@ -7,89 +7,40 @@ layout: default
 <div id="report-container" class="report-container">
 
   <div class="report-header">
-
     <div id="report-new-button" class="report-new-button">
-      <div class="report-new-text">Visualize another spreadsheet</div>
+      <a href="/" target="_blank" class="report-new-text">New Spreadsheet</a>
     </div>
 
-    <!--
-    <form id="report-submit-bar" class="report-submit-bar" autocomplete="off">
-      <img class="report-google-logo" alt="Google logo" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/512px-Google_%22G%22_Logo.svg.png" />
-      <input type="text" name="url" id="spreadsheet-url" class="input-spreadsheet-url" placeholder="Visualize a new spreadsheet" required>
-      <div id="submit-spreadsheet" class="report-submit-spreadsheet">&#8594;</div>
-    </form>
-    -->
-
     <div class="report-top-options">
-      <div class="top-option">Saved</div>
+      <div class="top-option">Saved Reports</div>
       <div class="top-option">Settings</div>
     </div>
   </div>
 
   <div id="report-processing" class="report-processing">
-    <!-- Step 1 -->
-    <div id="processing-step-access" class="processing-step inactive">
-      <svg class="processing-circle" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="50" cy="50" r="50"/>
-      </svg>
-      <div class="processing-text">Accessing spreadsheet</div>
-    </div>
-    <div id="authorize-container" class="help-message hidden">
-      <div class="authorize-header">
-        <div class="authorize-text message-text">
-          <p class="help-paragraph">This spreadsheet is private. Link your Google account to visualize all of your private spreadsheets.</p>
+    {%- include loading-report.html -%}
+    {%- include link-google.html -%}
+    <div id="loading-issue" class="loading-issue hidden"></div>
+  </div>
+
+  <div id="report" class="report invisible">
+
+    <div class="report-spreadsheet-header">
+      <div class="report-spreadsheet-header-title">
+        <a id="report-spreadsheet-url" class="report-spreadsheet-url" target="_blank" rel="noopener noreferrer">
+          View spreadsheet <img src="/assets/images/expand.png" />
+        </a>
+        <div id="report-spreadsheet-title" class="report-spreadsheet-title"></div>
+        <div id="report-help" class="report-help">
+          Click on one of the visualizations in this report to see it up close, learn what it means, download it, or save it to your Google Drive.
         </div>
-        <div id="signin" class="signin">
-          <img class="google-logo signin-logo" alt="Google sign-in" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/512px-Google_%22G%22_Logo.svg.png" />
-          <div class="signin-text">
-            Link your account
-          </div>
+      </div>
+      <div>
+        <div class="report-spreadsheet-header-save-message">
+          <span id="save-this-report" class="save-this-report">Save this report</span> to your Google Drive so you can quickly access it again.
         </div>
       </div>
     </div>
-    <div id="issue-step-1" class="issue-step hidden"></div>
 
-    <!-- Step 2 -->
-    <div id="processing-step-fields" class="processing-step inactive">
-      <svg class="processing-circle" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="50" cy="50" r="50"/>
-      </svg>
-      <div class="processing-text">Analyzing spreadsheet fields</div>
-    </div>
-    <div id="issue-step-2" class="issue-step hidden"></div>
-
-    <!-- Step 3 -->
-    <div id="processing-step-choose" class="processing-step inactive">
-      <svg class="processing-circle" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="50" cy="50" r="50"/>
-      </svg>
-      <div class="processing-text">Choosing designs</div>
-    </div>
-    <div id="issue-step-3" class="issue-step hidden"></div>
-
-    <!-- Step 4 -->
-    <div id="processing-step-load" class="processing-step inactive">
-      <svg class="processing-circle" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="50" cy="50" r="50"/>
-      </svg>
-      <div class="processing-text">Loading data</div>
-    </div>
-    <div id="issue-step-4" class="issue-step hidden"></div>
-
-    <!-- Step 5 -->
-    <div id="processing-step-render" class="processing-step inactive">
-      <svg class="processing-circle" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="50" cy="50" r="50"/>
-      </svg>
-      <div class="processing-text">Rendering visualizations</div>
-    </div>
-    <div id="issue-step-5" class="issue-step hidden"></div>
-  </div>
-
-  <div id="report" class="report hidden">
-    <div id="report-spreadsheet-title" class="report-spreadsheet-title"></div>
-    <a id="report-spreadsheet-url" class="report-spreadsheet-url" target="_blank" rel="noopener noreferrer">
-      View spreadsheet <img src="/assets/images/expand.png" />
-    </a>
   </div>
 </div>

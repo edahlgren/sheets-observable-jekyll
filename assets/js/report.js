@@ -2791,11 +2791,29 @@
 	  });
 	}
 
-	function initialize() {
+	function initialize(loader) {
 	  return new Promise(function (resolve, reject) {
+	    if (loader) {
+	      loader.desc.textContent = "Loading apis";
+	    }
+
 	    load_script().then(function () {
+	      if (loader) {
+	        loader.bar.style.width = 10 + "%";
+	        loader.desc.textContent = "Initializing";
+	      }
+
 	      load_client().then(function () {
+	        if (loader) {
+	          loader.bar.style.width = 20 + "%";
+	          loader.desc.textContent = "Authenticating";
+	        }
+
 	        init_client().then(function () {
+	          if (loader) {
+	            loader.bar.style.width = 30 + "%";
+	          }
+
 	          resolve();
 	        }).catch(reject);
 	      }).catch(reject);
@@ -2849,53 +2867,41 @@
 	    return gapi.auth2.getAuthInstance().isSignedIn.get();
 	  },
 	  getSpreadsheetMetadata: function getSpreadsheetMetadata(id) {
-	    return gapi.client.sheets.spreadsheets.get({
-	      spreadsheetId: id
+	    return new Promise(function (resolve, reject) {
+	      gapi.client.sheets.spreadsheets.get({
+	        spreadsheetId: id
+	      }).then(function (response) {
+	        resolve(response.result);
+	      }).catch(reject);
 	    });
 	  },
 	  getSpreadsheetValues: function getSpreadsheetValues(id, range) {
-	    return gapi.client.sheets.spreadsheets.values.get({
-	      spreadsheetId: id,
-	      range: range
+	    return new Promise(function (resolve, reject) {
+	      gapi.client.sheets.spreadsheets.values.get({
+	        spreadsheetId: id,
+	        range: range
+	      }).then(function (response) {
+	        resolve(response.result.values);
+	      }).catch(reject);
 	    });
 	  }
 	}; // Whether the client has been initialized or not
 
 	var initialized = false;
 
-	function get_api(auth_config) {
+	function get_api(auth_config, loader) {
 	  return new Promise(function (resolve, reject) {
 	    if (initialized) {
-	      resolve(api);
+	      return resolve(api);
 	    }
 
-	    initialize().then(function () {
+	    initialize(loader).then(function (timing) {
 	      setup_auth(auth_config);
 	      initialized = true;
 	      resolve(api);
 	    }).catch(reject);
 	  });
 	}
-
-	function get_data(auth, id, sheet) {
-	  return new Promise(function (resolve, reject) {
-	    get_api(auth).then(function (api) {
-	      api.getSpreadsheetValues(id, sheet).then(function (response) {
-	        resolve(response.result.values);
-	      }).catch(reject);
-	    }).catch(reject);
-	  });
-	}
-
-	function access_spreadsheet(auth, id) {
-	  return new Promise(function (resolve, reject) {
-	    get_api(auth).then(function (api) {
-	      api.getSpreadsheetMetadata(id).then(function (response) {
-	        resolve(response.result);
-	      }).catch(reject);
-	    }).catch(reject);
-	  });
-	} // Helper functions, no API needed
 
 	// Imports ------------------------------------
 
@@ -3104,7 +3110,6 @@
 	}
 
 	function parse_vars_xy(query_vars, header) {
-	  console.log("query vars", query_vars, "header", header);
 	  var x = query_vars.get("x"),
 	      y = query_vars.get("y"),
 	      x_desc = query_vars.get("xlabel"),
@@ -3289,81 +3294,147 @@
 	  return results;
 	}
 
-	function choose_designs(fields) {
-	  // Scripts to load
-	  var scripts = new Set(),
-	      chosen = []; // Cache data manipulations
-
-	  var combos_numerical_random = null; // Iterate through each of the visualizations
-
-	  for (var _i = 0, _Object$keys = Object.keys(visualizations); _i < _Object$keys.length; _i++) {
-	    var key = _Object$keys[_i];
-	    var v = visualizations[key]; // Handle each data format
-
-	    v.dataFormats.forEach(function (format) {
-	      switch (format) {
-	        case "combo:numerical-random":
-	          if (!fields.numericalRandom || fields.numericalRandom.length < 2) {
-	            break;
-	          }
-
-	          if (!combos_numerical_random) {
-	            combos_numerical_random = combinations(fields.numericalRandom);
-	          }
-
-	          console.assert(combos_numerical_random.length > 0); // Add a group of visualizations
-
-	          chosen.push({
-	            type: key,
-	            position: v.position,
-	            iterations: combos_numerical_random.map(function (combo) {
-	              return {
-	                x: combo[0],
-	                y: combo[1]
-	              };
-	            }),
-	            iterationData: v.iterationData,
-	            iterationTitles: v.iterationTitles,
-	            makeQueryVars: v.makeQueryVars,
-	            render: v.render
-	          }); // Make sure the script gets loaded
-
-	          scripts.add(v.script);
-	      }
-	    });
-	  }
-
-	  if (chosen.length == 0) {
-	    new Promise(function (resolve, reject) {
-	      reject(errors.NO_VISUALIZATIONS);
-	    });
-	  } // Make promises
-
-
-	  var scripts_array = Array.from(scripts.values());
-	  var load_scripts = Promise.all(scripts_array.map(function (script) {
-	    return loadScript(script);
-	  })); // Load visualization scripts
-
-	  return new Promise(function (resolve, reject) {
-	    load_scripts.then(function () {
-	      resolve(chosen);
-	    }).catch(reject);
-	  });
+	function load_designs(_x, _x2) {
+	  return _load_designs.apply(this, arguments);
 	}
 
-	function render_visualizations(_x) {
-	  return _render_visualizations.apply(this, arguments);
-	}
+	function _load_designs() {
+	  _load_designs = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(fields, loader) {
+	    var scripts, chosen, combos_numerical_random, _i, _Object$keys, key, v;
 
-	function _render_visualizations() {
-	  _render_visualizations = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(config) {
-	    var pn, i, v, plots, n, j, iter, input, svg, titles, url, extraQueryVars, plot;
 	    return regeneratorRuntime.wrap(function _callee$(_context) {
 	      while (1) {
 	        switch (_context.prev = _context.next) {
 	          case 0:
-	            // Sort visualizations by position
+	            // Scripts to load
+	            scripts = new Set(), chosen = []; // Cache data manipulations
+
+	            combos_numerical_random = null; // Choosing visualizations
+
+	            loader.desc.textContent = "Choosing visualizations";
+
+	            for (_i = 0, _Object$keys = Object.keys(visualizations); _i < _Object$keys.length; _i++) {
+	              key = _Object$keys[_i];
+	              v = visualizations[key]; // Handle each data format
+
+	              v.dataFormats.forEach(function (format) {
+	                switch (format) {
+	                  case "combo:numerical-random":
+	                    if (!fields.numericalRandom || fields.numericalRandom.length < 2) {
+	                      break;
+	                    }
+
+	                    if (!combos_numerical_random) {
+	                      combos_numerical_random = combinations(fields.numericalRandom);
+	                    }
+
+	                    console.assert(combos_numerical_random.length > 0); // Add a group of visualizations
+
+	                    chosen.push({
+	                      type: key,
+	                      position: v.position,
+	                      iterations: combos_numerical_random.map(function (combo) {
+	                        return {
+	                          x: combo[0],
+	                          y: combo[1]
+	                        };
+	                      }),
+	                      iterationData: v.iterationData,
+	                      iterationTitles: v.iterationTitles,
+	                      makeQueryVars: v.makeQueryVars,
+	                      render: v.render
+	                    }); // Make sure the script gets loaded
+
+	                    scripts.add(v.script);
+	                }
+	              });
+	            }
+
+	            loader.bar.style.width = 20 + "%"; // Handle no visulizations
+
+	            if (!(chosen.length == 0)) {
+	              _context.next = 7;
+	              break;
+	            }
+
+	            throw new Error(errors.NO_VISUALIZATIONS);
+
+	          case 7:
+	            _context.next = 9;
+	            return load_scripts(Array.from(scripts.values()), loader);
+
+	          case 9:
+	            return _context.abrupt("return", chosen);
+
+	          case 10:
+	          case "end":
+	            return _context.stop();
+	        }
+	      }
+	    }, _callee);
+	  }));
+	  return _load_designs.apply(this, arguments);
+	}
+
+	function load_scripts(_x3, _x4) {
+	  return _load_scripts.apply(this, arguments);
+	}
+
+	function _load_scripts() {
+	  _load_scripts = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(scripts, loader) {
+	    var total, interval, i;
+	    return regeneratorRuntime.wrap(function _callee2$(_context2) {
+	      while (1) {
+	        switch (_context2.prev = _context2.next) {
+	          case 0:
+	            total = scripts.length, interval = 80 / total;
+	            i = 1;
+
+	          case 2:
+	            if (!(i <= total)) {
+	              _context2.next = 10;
+	              break;
+	            }
+
+	            loader.desc.textContent = i + "/" + total;
+	            _context2.next = 6;
+	            return loadScript(scripts[i - 1]);
+
+	          case 6:
+	            loader.bar.style.width = (i == total ? 100 : 20 + interval * i) + "%";
+
+	          case 7:
+	            i++;
+	            _context2.next = 2;
+	            break;
+
+	          case 10:
+	          case "end":
+	            return _context2.stop();
+	        }
+	      }
+	    }, _callee2);
+	  }));
+	  return _load_scripts.apply(this, arguments);
+	}
+
+	function render_visualizations(_x5, _x6) {
+	  return _render_visualizations.apply(this, arguments);
+	}
+
+	function _render_visualizations() {
+	  _render_visualizations = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(config, loader) {
+	    var total, interval, pn, i, v, plots, n, j, iter, input, svg, titles, url, extraQueryVars, plot;
+	    return regeneratorRuntime.wrap(function _callee3$(_context3) {
+	      while (1) {
+	        switch (_context3.prev = _context3.next) {
+	          case 0:
+	            total = 0;
+	            config.visualizations.map(function (v) {
+	              total += v.iterations.length;
+	            });
+	            interval = 100 / total; // Sort visualizations by position
+
 	            config.visualizations.sort(function (a, b) {
 	              return a.position - b.position;
 	            }); // Render each visualization
@@ -3371,14 +3442,13 @@
 	            pn = 1;
 	            i = 0;
 
-	          case 3:
+	          case 6:
 	            if (!(i < config.visualizations.length)) {
-	              _context.next = 30;
+	              _context3.next = 33;
 	              break;
 	            }
 
-	            v = config.visualizations[i];
-	            console.log("visualization", v); // Plots container
+	            v = config.visualizations[i]; // Plots container
 
 	            plots = plots_container(); // Choose n value
 
@@ -3386,24 +3456,24 @@
 
 	            j = 0;
 
-	          case 9:
+	          case 11:
 	            if (!(j < v.iterations.length)) {
-	              _context.next = 26;
+	              _context3.next = 29;
 	              break;
 	            }
 
-	            iter = v.iterations[j]; // Get the data needed for this iteration
+	            iter = v.iterations[j];
+	            loader.desc.textContent = pn + "/" + total; // Get the data needed for this iteration
 
 	            input = v.iterationData(iter, config.fields, config.data.slice(1)); // Make the visualization
 
-	            _context.next = 14;
+	            _context3.next = 17;
 	            return v.render(input);
 
-	          case 14:
-	            svg = _context.sent;
+	          case 17:
+	            svg = _context3.sent;
 	            // Get a title to describe the visualization
-	            titles = v.iterationTitles(iter, config.fields);
-	            console.log("visualization type:", v.type); // Make the plot url
+	            titles = v.iterationTitles(iter, config.fields); // Make the plot url
 
 	            url = "/plot?id=" + config.id + "&sheet=" + config.sheet + "&pn=" + pn + "&v=" + v.type;
 	            extraQueryVars = v.makeQueryVars(iter, config.fields);
@@ -3415,34 +3485,36 @@
 
 	            plot = format_plot(pn, url, n, titles, svg); // Add the plot element to the container
 
-	            plots.appendChild(plot); // Increment the plot number
+	            plots.appendChild(plot); // Update loader
+
+	            loader.bar.style.width = (pn == total ? 100 : interval * pn) + "%"; // Increment the plot number
 
 	            pn += 1;
 
-	          case 23:
+	          case 26:
 	            j++;
-	            _context.next = 9;
+	            _context3.next = 11;
 	            break;
 
-	          case 26:
+	          case 29:
 	            // Add the plot to the root
 	            config.root.appendChild(plots);
 
-	          case 27:
+	          case 30:
 	            i++;
-	            _context.next = 3;
+	            _context3.next = 6;
 	            break;
 
-	          case 30:
+	          case 33:
 	            // If all that worked, then fill in the report title
 	            set_title(config.title, config.url);
 
-	          case 31:
+	          case 34:
 	          case "end":
-	            return _context.stop();
+	            return _context3.stop();
 	        }
 	      }
-	    }, _callee);
+	    }, _callee3);
 	  }));
 	  return _render_visualizations.apply(this, arguments);
 	}
@@ -3465,14 +3537,7 @@
 	}
 
 	function format_plot(plot_number, url, n, titles, svg) {
-	  // Create <div class="svg-overlay"><p>Expand</p></div>
-	  var overlay = document.createElement("div");
-	  overlay.classList.add("report-svg-overlay");
-	  var paragraph = document.createElement("p"),
-	      expand = document.createTextNode("Expand");
-	  paragraph.appendChild(expand);
-	  overlay.appendChild(paragraph); // Create <div class="svg-wrap">
-
+	  // Create <div class="svg-wrap">
 	  var wrap = document.createElement("a");
 	  wrap.id = "pn-" + plot_number;
 	  wrap.classList.add("report-svg-wrap");
@@ -3482,8 +3547,7 @@
 	  titles.forEach(function (title) {
 	    wrap.appendChild(format_plot_title(title));
 	  });
-	  wrap.appendChild(svg);
-	  wrap.appendChild(overlay); // Create <div class="plot-n">
+	  wrap.appendChild(svg); // Create <div class="plot-n">
 
 	  var container = document.createElement("div");
 	  container.classList.add("report-plot-" + n);
@@ -3501,19 +3565,23 @@
 	// Top submit new spreadsheet bar
 
 	var spreadsheet_submit = document.getElementById("submit-spreadsheet"),
-	    spreadsheet_input = document.getElementById("spreadsheet-url"); // Processing steps
+	    spreadsheet_input = document.getElementById("spreadsheet-url"); // Loading report
 
-	var step_access = document.getElementById("processing-step-access"),
-	    step_fields = document.getElementById("processing-step-fields"),
-	    step_choose = document.getElementById("processing-step-choose"),
-	    step_load = document.getElementById("processing-step-load"),
-	    step_render = document.getElementById("processing-step-render"); // Sign in message
+	var processing = document.getElementById("report-processing");
+	var part1 = document.getElementById("report-loader-part1"),
+	    load_part1_bar = part1.querySelector(".report-loader-bar-complete"),
+	    load_part1_desc = part1.querySelector(".report-loader-part-desc");
+	var part2 = document.getElementById("report-loader-part2"),
+	    load_part2_bar = part2.querySelector(".report-loader-bar-complete"),
+	    load_part2_desc = part2.querySelector(".report-loader-part-desc");
+	var part3 = document.getElementById("report-loader-part3"),
+	    load_part3_bar = part3.querySelector(".report-loader-bar-complete"),
+	    load_part3_desc = part3.querySelector(".report-loader-part-desc"); // Sign in message
 
 	var authorize_message$1 = document.getElementById("authorize-container"),
-	    signin_button = document.getElementById("signin"); // Containers for processing and report
+	    signin_button = document.getElementById("signin"); // Contains the report
 
-	var processing = document.getElementById("report-processing"),
-	    report = document.getElementById("report"); // Request channels ---------------------------
+	var report = document.getElementById("report"); // Request channels ---------------------------
 
 	var request_channel = null,
 	    response_channels = new Map(); // Execute ------------------------------------
@@ -3567,124 +3635,123 @@
 
 	function _process() {
 	  _process = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(id, step) {
-	    var auth, metadata, fields, designs, data, sheet;
+	    var api, metadata, sheet, fields, designs, data, auth, render_config;
 	    return regeneratorRuntime.wrap(function _callee$(_context) {
 	      while (1) {
 	        switch (_context.prev = _context.next) {
 	          case 0:
-	            console.log("starting processing with", "[" + id + "]");
-	            auth = null, metadata = null, fields = null, designs = null, data = null; // Make auth config (signin / signout buttons)
+	            console.log("processing [" + id + "]");
+	            api = null, metadata = null, sheet = null, fields = null, designs = null, data = null; // Make auth config (signin / signout buttons)
 
 	            auth = make_auth({
 	              afterAuth: function afterAuth() {
 	                authorize_message$1.classList.add("hidden");
 	                process$3(id, steps.ACCESS_SPREADSHEET_AFTER_AUTH);
 	              }
-	            }); // Step 1: Accessing the spreadsheet
+	            }); // Part 1 --------------------------------------
+	            // Authenticating
 
-	            step_access.classList.remove("inactive");
-	            _context.prev = 4;
-	            _context.next = 7;
-	            return access_spreadsheet(auth, id);
+	            _context.prev = 3;
+	            _context.next = 6;
+	            return get_api(auth, {
+	              bar: load_part1_bar,
+	              desc: load_part1_desc
+	            });
 
-	          case 7:
-	            metadata = _context.sent;
-	            _context.next = 15;
+	          case 6:
+	            api = _context.sent;
+	            _context.next = 14;
 	            break;
 
-	          case 10:
-	            _context.prev = 10;
-	            _context.t0 = _context["catch"](4);
-	            console.log("[error: access spreadsheet]", _context.t0);
+	          case 9:
+	            _context.prev = 9;
+	            _context.t0 = _context["catch"](3);
+	            console.log("[error: get google api]", _context.t0);
 	            steps.show_help(step, _context.t0);
 	            return _context.abrupt("return");
 
-	          case 15:
-	            // Step 2: Choose a sheet & parse its fields
-	            step_fields.classList.remove("inactive");
+	          case 14:
+	            // Getting metadata
+	            load_part1_desc.textContent = "Getting metadata";
+	            _context.prev = 15;
+	            _context.next = 18;
+	            return api.getSpreadsheetMetadata(id);
+
+	          case 18:
+	            metadata = _context.sent;
+	            _context.next = 26;
+	            break;
+
+	          case 21:
+	            _context.prev = 21;
+	            _context.t1 = _context["catch"](15);
+	            console.log("[error: access spreadsheet]", _context.t1);
+	            steps.show_help(step, _context.t1);
+	            return _context.abrupt("return");
+
+	          case 26:
+	            load_part1_bar.style.width = 45 + "%"; // Choosing sheet
+
+	            load_part1_desc.textContent = "Choosing sheet";
 	            step = steps.CHOOSE_SPREADSHEET;
 	            sheet = choose_single_sheet(metadata.sheets);
 
 	            if (sheet) {
-	              _context.next = 21;
+	              _context.next = 33;
 	              break;
 	            }
 
 	            steps.show_help(step);
 	            return _context.abrupt("return");
 
-	          case 21:
-	            step = steps.READ_FIELDS_DATA;
-	            _context.prev = 22;
-	            _context.next = 25;
-	            return get_data(auth, id, sheet + ".fields");
+	          case 33:
+	            load_part1_bar.style.width = 50 + "%"; // Reading fields
 
-	          case 25:
+	            load_part1_desc.textContent = "Reading spreadsheet fields";
+	            step = steps.READ_FIELDS_DATA;
+	            _context.prev = 36;
+	            _context.next = 39;
+	            return api.getSpreadsheetValues(id, sheet + ".fields");
+
+	          case 39:
 	            fields = _context.sent;
-	            _context.next = 32;
+	            _context.next = 46;
 	            break;
 
-	          case 28:
-	            _context.prev = 28;
-	            _context.t1 = _context["catch"](22);
-	            steps.show_help(step, _context.t1);
+	          case 42:
+	            _context.prev = 42;
+	            _context.t2 = _context["catch"](36);
+	            steps.show_help(step, _context.t2);
 	            return _context.abrupt("return");
 
-	          case 32:
+	          case 46:
+	            load_part1_bar.style.width = 70 + "%"; // Reading data
+
+	            load_part1_desc.textContent = "Reading spreadsheet data";
+	            step = steps.DOWNLOAD_DATA;
+	            _context.prev = 49;
+	            _context.next = 52;
+	            return api.getSpreadsheetValues(id, sheet);
+
+	          case 52:
+	            data = _context.sent;
+	            _context.next = 59;
+	            break;
+
+	          case 55:
+	            _context.prev = 55;
+	            _context.t3 = _context["catch"](49);
+	            steps.show_help(step, _context.t3);
+	            return _context.abrupt("return");
+
+	          case 59:
+	            load_part1_bar.style.width = 90 + "%"; // Validating
+
+	            load_part1_desc.textContent = "Checking consistency";
 	            step = steps.ORGANIZE_FIELDS_DATA;
 	            fields = organize_fields(fields);
 
 	            if (!fields.isMalformed) {
-	              _context.next = 37;
-	              break;
-	            }
-
-	            steps.show_help(step);
-	            return _context.abrupt("return");
-
-	          case 37:
-	            // Step 3: Choose and download visualization code
-	            step_choose.classList.remove("inactive");
-	            step = steps.CHOOSE_VISUALIZATIONS;
-	            _context.prev = 39;
-	            _context.next = 42;
-	            return choose_designs(fields);
-
-	          case 42:
-	            designs = _context.sent;
-	            _context.next = 49;
-	            break;
-
-	          case 45:
-	            _context.prev = 45;
-	            _context.t2 = _context["catch"](39);
-	            steps.show_help(step, _context.t2);
-	            return _context.abrupt("return");
-
-	          case 49:
-	            // Step 4: Loading data
-	            step_load.classList.remove("inactive");
-	            step = steps.DOWNLOAD_DATA;
-	            _context.prev = 51;
-	            _context.next = 54;
-	            return get_data(auth, id, sheet);
-
-	          case 54:
-	            data = _context.sent;
-	            _context.next = 61;
-	            break;
-
-	          case 57:
-	            _context.prev = 57;
-	            _context.t3 = _context["catch"](51);
-	            steps.show_help(step, _context.t3);
-	            return _context.abrupt("return");
-
-	          case 61:
-	            step = steps.MATCH_HEADER_TO_FIELDS;
-	            fields = match_header_to_fields(fields, data[0]);
-
-	            if (fields) {
 	              _context.next = 66;
 	              break;
 	            }
@@ -3693,12 +3760,43 @@
 	            return _context.abrupt("return");
 
 	          case 66:
-	            // Step 4: Loading data
-	            step_render.classList.remove("inactive");
+	            step = steps.MATCH_HEADER_TO_FIELDS;
+	            fields = match_header_to_fields(fields, data[0]);
+
+	            if (fields) {
+	              _context.next = 71;
+	              break;
+	            }
+
+	            steps.show_help(step);
+	            return _context.abrupt("return");
+
+	          case 71:
+	            load_part1_bar.style.width = 100 + "%"; // Part 2 --------------------------------------
+
+	            step = steps.CHOOSE_VISUALIZATIONS;
+	            _context.prev = 73;
+	            _context.next = 76;
+	            return load_designs(fields, {
+	              bar: load_part2_bar,
+	              desc: load_part2_desc
+	            });
+
+	          case 76:
+	            designs = _context.sent;
+	            _context.next = 83;
+	            break;
+
+	          case 79:
+	            _context.prev = 79;
+	            _context.t4 = _context["catch"](73);
+	            steps.show_help(step, _context.t4);
+	            return _context.abrupt("return");
+
+	          case 83:
+	            // Part 3 --------------------------------------
 	            step = steps.RENDER_VISUALIZATIONS;
-	            _context.prev = 68;
-	            _context.next = 71;
-	            return render_visualizations({
+	            render_config = {
 	              root: report,
 	              id: id,
 	              sheet: sheet,
@@ -3707,29 +3805,33 @@
 	              fields: fields,
 	              visualizations: designs,
 	              data: data
+	            };
+	            _context.prev = 85;
+	            _context.next = 88;
+	            return render_visualizations(render_config, {
+	              bar: load_part3_bar,
+	              desc: load_part3_desc
 	            });
 
-	          case 71:
-	            _context.next = 77;
+	          case 88:
+	            _context.next = 94;
 	            break;
 
-	          case 73:
-	            _context.prev = 73;
-	            _context.t4 = _context["catch"](68);
-	            steps.show_help(step, _context.t4);
+	          case 90:
+	            _context.prev = 90;
+	            _context.t5 = _context["catch"](85);
+	            steps.show_help(step, _context.t5);
 	            return _context.abrupt("return");
 
-	          case 77:
-	            setTimeout(function () {
-	              finish(id, sheet);
-	            }, 500);
+	          case 94:
+	            finish(id, sheet);
 
-	          case 78:
+	          case 95:
 	          case "end":
 	            return _context.stop();
 	        }
 	      }
-	    }, _callee, null, [[4, 10], [22, 28], [39, 45], [51, 57], [68, 73]]);
+	    }, _callee, null, [[3, 9], [15, 21], [36, 42], [49, 55], [73, 79], [85, 90]]);
 	  }));
 	  return _process.apply(this, arguments);
 	}
@@ -3738,7 +3840,7 @@
 	  request_channel = new BroadcastChannel("request_channel:" + spreadsheetId + ":" + sheet);
 	  request_channel.onmessage = handle_channel_request;
 	  processing.classList.add("hidden");
-	  report.classList.remove("hidden");
+	  report.classList.remove("invisible");
 	}
 
 	function handle_channel_request(e) {

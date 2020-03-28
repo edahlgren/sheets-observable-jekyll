@@ -2834,11 +2834,29 @@
 	  });
 	}
 
-	function initialize() {
+	function initialize(loader) {
 	  return new Promise(function (resolve, reject) {
+	    if (loader) {
+	      loader.desc.textContent = "Loading apis";
+	    }
+
 	    load_script().then(function () {
+	      if (loader) {
+	        loader.bar.style.width = 10 + "%";
+	        loader.desc.textContent = "Initializing";
+	      }
+
 	      load_client().then(function () {
+	        if (loader) {
+	          loader.bar.style.width = 20 + "%";
+	          loader.desc.textContent = "Authenticating";
+	        }
+
 	        init_client().then(function () {
+	          if (loader) {
+	            loader.bar.style.width = 30 + "%";
+	          }
+
 	          resolve();
 	        }).catch(reject);
 	      }).catch(reject);
@@ -2892,53 +2910,41 @@
 	    return gapi.auth2.getAuthInstance().isSignedIn.get();
 	  },
 	  getSpreadsheetMetadata: function getSpreadsheetMetadata(id) {
-	    return gapi.client.sheets.spreadsheets.get({
-	      spreadsheetId: id
+	    return new Promise(function (resolve, reject) {
+	      gapi.client.sheets.spreadsheets.get({
+	        spreadsheetId: id
+	      }).then(function (response) {
+	        resolve(response.result);
+	      }).catch(reject);
 	    });
 	  },
 	  getSpreadsheetValues: function getSpreadsheetValues(id, range) {
-	    return gapi.client.sheets.spreadsheets.values.get({
-	      spreadsheetId: id,
-	      range: range
+	    return new Promise(function (resolve, reject) {
+	      gapi.client.sheets.spreadsheets.values.get({
+	        spreadsheetId: id,
+	        range: range
+	      }).then(function (response) {
+	        resolve(response.result.values);
+	      }).catch(reject);
 	    });
 	  }
 	}; // Whether the client has been initialized or not
 
 	var initialized = false;
 
-	function get_api(auth_config) {
+	function get_api(auth_config, loader) {
 	  return new Promise(function (resolve, reject) {
 	    if (initialized) {
-	      resolve(api);
+	      return resolve(api);
 	    }
 
-	    initialize().then(function () {
+	    initialize(loader).then(function (timing) {
 	      setup_auth(auth_config);
 	      initialized = true;
 	      resolve(api);
 	    }).catch(reject);
 	  });
 	}
-
-	function get_data(auth, id, sheet) {
-	  return new Promise(function (resolve, reject) {
-	    get_api(auth).then(function (api) {
-	      api.getSpreadsheetValues(id, sheet).then(function (response) {
-	        resolve(response.result.values);
-	      }).catch(reject);
-	    }).catch(reject);
-	  });
-	}
-
-	function access_spreadsheet(auth, id) {
-	  return new Promise(function (resolve, reject) {
-	    get_api(auth).then(function (api) {
-	      api.getSpreadsheetMetadata(id).then(function (response) {
-	        resolve(response.result);
-	      }).catch(reject);
-	    }).catch(reject);
-	  });
-	} // Helper functions, no API needed
 
 	function iteration_data_xy(i, fields, data) {
 	  var x = fields.get(i.x),
@@ -2967,7 +2973,6 @@
 	}
 
 	function parse_vars_xy(query_vars, header) {
-	  console.log("query vars", query_vars, "header", header);
 	  var x = query_vars.get("x"),
 	      y = query_vars.get("y"),
 	      x_desc = query_vars.get("xlabel"),
@@ -3051,9 +3056,20 @@
 	  }
 	};
 
-	var processing = document.getElementById("plot-processing"),
-	    plot = document.getElementById("plot");
-	var plot_spreadsheet_title = document.getElementById("plot-spreadsheet-title"),
+	// Header buttons
+
+	var back_button = document.getElementById("plot-back-button"); // Loading plot
+
+	var processing = document.getElementById("plot-processing");
+	var part1 = document.getElementById("plot-loader-part1"),
+	    load_part1_bar = part1.querySelector(".plot-loader-bar-complete"),
+	    load_part1_desc = part1.querySelector(".plot-loader-part-desc");
+	var part2 = document.getElementById("plot-loader-part2"),
+	    load_part2_bar = part2.querySelector(".plot-loader-bar-complete"),
+	    load_part2_desc = part2.querySelector(".plot-loader-part-desc"); // Actual plot
+
+	var plot = document.getElementById("plot"),
+	    plot_spreadsheet_title = document.getElementById("plot-spreadsheet-title"),
 	    plot_spreadsheet_link = document.getElementById("plot-spreadsheet-url"),
 	    plot_title = document.getElementById("plot-title"),
 	    plot_help = document.getElementById("plot-help"),
@@ -3070,7 +3086,7 @@
 	  }
 
 	  return vars_map;
-	} // Execute -------------------------------------
+	} // Parse query vars ------------------------------
 
 
 	var qvars = query_vars(),
@@ -3078,7 +3094,13 @@
 	    sheet = qvars.get("sheet"),
 	    plot_number = qvars.get("pn"),
 	    visualization = qvars.get("v");
-	console.log("[spreadsheet " + id$1 + "]", "[sheet " + sheet + "]", "[plot number " + plot_number + "]", "[visualization " + visualization + "]"); // Load the visualization from a tab ------------
+	console.log("[spreadsheet " + id$1 + "]", "[sheet " + sheet + "]", "[plot number " + plot_number + "]", "[visualization " + visualization + "]"); // Implement back button ------------------------
+
+	back_button.onclick = function (event) {
+	  // Go to the report page
+	  window.location.href = "report?id=" + id$1;
+	}; // Load the visualization from a tab ------------
+
 
 	var request_channel = new BroadcastChannel("request_channel:" + id$1 + ":" + sheet),
 	    request_timeout = null;
@@ -3086,8 +3108,6 @@
 	    response_channel = new BroadcastChannel(response_channel_name);
 
 	response_channel.onmessage = function (e) {
-	  console.log("View received message:", e.data);
-
 	  switch (e.data.type) {
 	    case "ResourceResponse":
 	      window.clearTimeout(request_timeout);
@@ -3181,118 +3201,160 @@
 
 	function _load_visualization() {
 	  _load_visualization = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
-	    var auth, metadata, vars, data, svg, sheets, vspec, input;
+	    var auth, api, metadata, vars, data, svg, vspec, sheets, input;
 	    return regeneratorRuntime.wrap(function _callee2$(_context2) {
 	      while (1) {
 	        switch (_context2.prev = _context2.next) {
 	          case 0:
-	            auth = {}, metadata = null, vars = null, data = null, svg = null;
-	            _context2.prev = 1;
-	            _context2.next = 4;
-	            return access_spreadsheet(auth, id$1);
+	            auth = {}, api = null, metadata = null, vars = null, data = null, svg = null; // TODO: Make auth
+	            // TODO: Handle errors
+	            // Part 1 --------------------------------------
+	            // This should go away when I switch to one template per
+	            // visualization type
 
-	          case 4:
-	            metadata = _context2.sent;
-	            _context2.next = 11;
-	            break;
-
-	          case 7:
-	            _context2.prev = 7;
-	            _context2.t0 = _context2["catch"](1);
-	            console.log("[error: access spreadsheet]", _context2.t0);
-	            throw _context2.t0;
-
-	          case 11:
-	            sheets = metadata.sheets.map(function (s) {
-	              return s.properties.title;
-	            });
-
-	            if (sheets.includes(sheet)) {
-	              _context2.next = 14;
-	              break;
-	            }
-
-	            throw new Error("No sheet named " + sheet);
-
-	          case 14:
 	            if (visualizations.hasOwnProperty(visualization)) {
-	              _context2.next = 16;
+	              _context2.next = 3;
 	              break;
 	            }
 
 	            throw new Error("No visualization named " + visualization);
 
-	          case 16:
+	          case 3:
 	            vspec = visualizations[visualization];
-	            _context2.prev = 17;
-	            loadScript(vspec.script);
+	            _context2.prev = 4;
+	            _context2.next = 7;
+	            return get_api(auth, {
+	              bar: load_part1_bar,
+	              desc: load_part1_desc
+	            });
+
+	          case 7:
+	            api = _context2.sent;
+	            _context2.next = 14;
+	            break;
+
+	          case 10:
+	            _context2.prev = 10;
+	            _context2.t0 = _context2["catch"](4);
+	            console.log("[error: get google api]", _context2.t0);
+	            throw _context2.t0;
+
+	          case 14:
+	            load_part1_desc.textContent = "Getting metadata";
+	            _context2.prev = 15;
+	            _context2.next = 18;
+	            return api.getSpreadsheetMetadata(id$1);
+
+	          case 18:
+	            metadata = _context2.sent;
 	            _context2.next = 25;
 	            break;
 
 	          case 21:
 	            _context2.prev = 21;
-	            _context2.t1 = _context2["catch"](17);
-	            console.log("[error: loading script]", _context2.t1);
+	            _context2.t1 = _context2["catch"](15);
+	            console.log("[error: access spreadsheet]", _context2.t1);
 	            throw _context2.t1;
 
 	          case 25:
-	            _context2.prev = 25;
-	            _context2.next = 28;
-	            return get_data(auth, id$1, sheet);
+	            load_part1_bar.style.width = 45 + "%";
+	            load_part1_desc.textContent = "Checking sheet";
+	            sheets = metadata.sheets.map(function (s) {
+	              return s.properties.title;
+	            });
 
-	          case 28:
-	            data = _context2.sent;
+	            if (sheets.includes(sheet)) {
+	              _context2.next = 30;
+	              break;
+	            }
+
+	            throw new Error("No sheet named " + sheet);
+
+	          case 30:
+	            load_part1_bar.style.width = 50 + "%";
+	            load_part1_desc.textContent = "Reading spreadsheet data";
+	            _context2.prev = 32;
 	            _context2.next = 35;
+	            return api.getSpreadsheetValues(id$1, sheet);
+
+	          case 35:
+	            data = _context2.sent;
+	            _context2.next = 42;
 	            break;
 
-	          case 31:
-	            _context2.prev = 31;
-	            _context2.t2 = _context2["catch"](25);
+	          case 38:
+	            _context2.prev = 38;
+	            _context2.t2 = _context2["catch"](32);
 	            console.log("[error: loading data]", _context2.t2);
 	            throw _context2.t2;
 
-	          case 35:
-	            _context2.prev = 35;
+	          case 42:
+	            load_part1_bar.style.width = 70 + "%";
+	            load_part1_desc.textContent = "Checking consistency";
+	            _context2.prev = 44;
 	            vars = vspec.parseQueryVars(qvars, data[0]);
-	            _context2.next = 43;
+	            _context2.next = 52;
 	            break;
 
-	          case 39:
-	            _context2.prev = 39;
-	            _context2.t3 = _context2["catch"](35);
+	          case 48:
+	            _context2.prev = 48;
+	            _context2.t3 = _context2["catch"](44);
 	            console.log("[error: parsing query vars]", _context2.t3);
 	            throw _context2.t3;
 
-	          case 43:
-	            _context2.prev = 43;
-	            input = vspec.plotData(vars, data);
-	            _context2.next = 47;
-	            return vspec.render(input);
+	          case 52:
+	            load_part1_bar.style.width = 100 + "%"; // Part 2 --------------------------------------
 
-	          case 47:
-	            svg = _context2.sent;
-	            _context2.next = 54;
+	            load_part2_desc.textContent = "Loading design";
+	            _context2.prev = 54;
+	            _context2.next = 57;
+	            return loadScript(vspec.script);
+
+	          case 57:
+	            _context2.next = 63;
 	            break;
 
-	          case 50:
-	            _context2.prev = 50;
-	            _context2.t4 = _context2["catch"](43);
-	            console.log("[error: rendering]", _context2.t4);
+	          case 59:
+	            _context2.prev = 59;
+	            _context2.t4 = _context2["catch"](54);
+	            console.log("[error: loading script]", _context2.t4);
 	            throw _context2.t4;
 
-	          case 54:
-	            // Fill in the plot
+	          case 63:
+	            load_part2_bar.style.width = 25 + "%";
+	            load_part2_desc.textContent = "Formatting input";
+	            input = vspec.plotData(vars, data);
+	            load_part2_bar.style.width = 50 + "%";
+	            load_part2_desc.textContent = "Rendering";
+	            _context2.prev = 68;
+	            _context2.next = 71;
+	            return vspec.render(input);
+
+	          case 71:
+	            svg = _context2.sent;
+	            _context2.next = 78;
+	            break;
+
+	          case 74:
+	            _context2.prev = 74;
+	            _context2.t5 = _context2["catch"](68);
+	            console.log("[error: rendering]", _context2.t5);
+	            throw _context2.t5;
+
+	          case 78:
+	            load_part2_bar.style.width = 100 + "%"; // Fill in the plot
+
 	            plot_spreadsheet_title.textContent = metadata.properties.title;
 	            plot_spreadsheet_link.href = metadata.spreadsheetUrl;
 	            plot_title.textContent = vspec.plotTitle(vars);
 	            actual_plot.appendChild(svg);
 
-	          case 58:
+	          case 83:
 	          case "end":
 	            return _context2.stop();
 	        }
 	      }
-	    }, _callee2, null, [[1, 7], [17, 21], [25, 31], [35, 39], [43, 50]]);
+	    }, _callee2, null, [[4, 10], [15, 21], [32, 38], [44, 48], [54, 59], [68, 74]]);
 	  }));
 	  return _load_visualization.apply(this, arguments);
 	}

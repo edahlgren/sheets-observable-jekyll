@@ -104,7 +104,7 @@ function combinations(array) {
   return results;
 }
 
-function choose_designs(fields) {
+async function load_designs(fields, loader) {
   // Scripts to load
   var scripts = new Set(),
       chosen = [];
@@ -112,7 +112,8 @@ function choose_designs(fields) {
   // Cache data manipulations
   var combos_numerical_random = null;
 
-  // Iterate through each of the visualizations
+  // Choosing visualizations
+  loader.desc.textContent = "Choosing visualizations";
   for (var key of Object.keys(visualizations)) {
     var v = visualizations[key];
 
@@ -146,28 +147,38 @@ function choose_designs(fields) {
       }
     });
   }
+  loader.bar.style.width = 20 + "%";
 
+  // Handle no visulizations
   if (chosen.length == 0) {
-    new Promise(function(resolve, reject) {
-      reject(errors.NO_VISUALIZATIONS);
-    });
+    throw new Error(errors.NO_VISUALIZATIONS);
   }
 
-  // Make promises
-  var scripts_array = Array.from(scripts.values());
-  var load_scripts = Promise.all(scripts_array.map(function(script) {
-    return loadScript(script);
-  }));
+  // Actually load the scripts
+  await load_scripts(Array.from(scripts.values()), loader);
 
-  // Load visualization scripts
-  return new Promise(function(resolve, reject) {
-    load_scripts.then(function() {
-      resolve(chosen);
-    }).catch(reject);
-  });
+  // Return chosen + loaded designs
+  return chosen;
 }
 
-async function render_visualizations(config) {
+async function load_scripts(scripts, loader) {
+  var total = scripts.length,
+      interval = 80 / total;
+
+  for (var i = 1; i <= total; i++) {
+    loader.desc.textContent = i + "/" + total;
+    await loadScript(scripts[i - 1]);
+    loader.bar.style.width = (i == total ? 100 : 20 + (interval * i)) + "%";
+  }
+}
+
+async function render_visualizations(config, loader) {
+  var total = 0;
+  config.visualizations.map(function(v) {
+    total += v.iterations.length;
+  });
+  var interval = 100 / total;
+
   // Sort visualizations by position
   config.visualizations.sort(function(a, b) {
     return a.position - b.position;
@@ -177,7 +188,6 @@ async function render_visualizations(config) {
   var pn = 1;
   for (var i = 0; i < config.visualizations.length; i++) {
     var v = config.visualizations[i];
-    console.log("visualization", v);
 
     // Plots container
     var plots = plots_container();
@@ -188,6 +198,7 @@ async function render_visualizations(config) {
     // Iterate through visualization
     for (var j = 0; j < v.iterations.length; j++) {
       var iter = v.iterations[j];
+      loader.desc.textContent = pn + "/" + total;
 
       // Get the data needed for this iteration
       var input = v.iterationData(iter, config.fields, config.data.slice(1));
@@ -198,13 +209,12 @@ async function render_visualizations(config) {
       // Get a title to describe the visualization
       var titles = v.iterationTitles(iter, config.fields);
 
-      console.log("visualization type:", v.type);
-
       // Make the plot url
       var url = "/plot?id=" + config.id +
                 "&sheet=" + config.sheet +
                 "&pn=" + pn +
                 "&v=" + v.type;
+
       var extraQueryVars = v.makeQueryVars(iter, config.fields);
       if (extraQueryVars.length > 0) {
         url += "&" + extraQueryVars.join("&");
@@ -215,6 +225,9 @@ async function render_visualizations(config) {
 
       // Add the plot element to the container
       plots.appendChild(plot);
+
+      // Update loader
+      loader.bar.style.width = (pn == total ? 100 : interval * pn) + "%";
 
       // Increment the plot number
       pn += 1;
@@ -247,15 +260,6 @@ function choose_n(num_iterations) {
 }
 
 function format_plot(plot_number, url, n, titles, svg) {
-  // Create <div class="svg-overlay"><p>Expand</p></div>
-  var overlay = document.createElement("div");
-  overlay.classList.add("report-svg-overlay");
-
-  var paragraph = document.createElement("p"),
-      expand = document.createTextNode("Expand");
-  paragraph.appendChild(expand);
-  overlay.appendChild(paragraph);
-
   // Create <div class="svg-wrap">
   var wrap = document.createElement("a");
   wrap.id = "pn-" + plot_number;
@@ -268,7 +272,6 @@ function format_plot(plot_number, url, n, titles, svg) {
     wrap.appendChild(format_plot_title(title));
   });
   wrap.appendChild(svg);
-  wrap.appendChild(overlay);
 
   // Create <div class="plot-n">
   var container = document.createElement("div");
@@ -288,7 +291,7 @@ function format_plot_title(title) {
 export {
   choose_single_sheet,
   organize_fields,
-  choose_designs,
+  load_designs,
   match_header_to_fields,
   render_visualizations
 };

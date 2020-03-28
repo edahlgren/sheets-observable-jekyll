@@ -5,36 +5,37 @@ layout: default
 {% assign relative_url = site.url | append: site.baseurl %}
 
 <div id="plot-container" class="plot-container">
+  <div class="plot-header">
+    <div id="plot-back-button" class="plot-back-button top-option">
+      &#8592; Back to Report
+    </div>
+    <div class="plot-top-options">
+      <div class="top-option">Saved Reports</div>
+      <div class="top-option">Settings</div>
+    </div>
+  </div>
+
   <div id="plot-processing" class="plot-processing hidden">
-    <img class="loading-dots" alt="Loading" src="/assets/images/dots.gif" />
+    {%- include loading-plot.html -%}
+    {%- include link-google.html -%}
+    <div id="loading-issue" class="loading-issue hidden"></div>
   </div>
 
   <div id="plot" class="plot hidden">
-    <div class="plot-header">
-      <div class="plot-header-buttons">
-        <div id="download-button" class="download-svg-button plot-header-button">
-          <div class="plot-header-text">Download image</div>
-        </div>
-        <div id="embed-button" class="embed-button plot-header-button">
-          <div class="plot-header-text">Embed in Sheets or Slides</div>
-        </div>
+    <div class="plot-spreadsheet-header">
+      <div class="plot-spreadsheet-header-title">
+        <a id="plot-spreadsheet-url" class="plot-spreadsheet-url" target="_blank" rel="noopener noreferrer">
+          <span id="plot-spreadsheet-title"></span> <img src="/assets/images/expand.png" />
+        </a>
+        <div id="plot-title" class="plot-title"></div>
       </div>
-      <div class="plot-top-options">
-        <div class="top-option">New</div>
-        <div class="top-option">Saved</div>
-        <div class="top-option">Settings</div>
+      <div class="plot-spreadsheet-header-options">
+        <div id="edit-button" class="plot-spreadsheet-option">Edit visualization</div>
+        <div id="download-button" class="plot-spreadsheet-option">Download image</div>
+        <div id="copy-button" class="plot-spreadsheet-option">Copy image</div>
+        <div id="save-button" class="plot-spreadsheet-option">Save to Google Drive</div>
       </div>
-    </div>
-
-    <div class="plot-spreadsheet-title">
-      <span id="plot-spreadsheet-title"></span>
-      <a id="plot-spreadsheet-url" class="plot-spreadsheet-url" target="_blank" rel="noopener noreferrer">&#8599;</a>
-    </div>
-    <div id="plot-title" class="plot-title"></div>
-    <div id="plot-help" class="plot-help">
-      This is a blurb that explains what's going on. Read more below.
     </div>
     <div id="actual-plot" class="actual-plot"></div>
-    <div id="plot-selected-data" class="plot-selected-data"></div>
   </div>
 </div>

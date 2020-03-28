@@ -60,7 +60,7 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
 }
 
 .new-submit-container {
-  margin-top: 12rem;
+  margin-top: 10rem;
 }
 
 .new-submit-desc {
@@ -192,18 +192,19 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
 }
 
 .spreadsheet-example-view {
-  font-family: 'Cerebri Regular', sans-serif;
+  font-family: 'Source Sans Pro', sans-serif;
   font-size: 13px;
-  font-weight: 400;
+  font-weight: 300;
   line-height: 2;
-  letter-spacing: .5px;
-  color: #aaaaaa;
+  letter-spacing: 1px;
+  color: #999999;
   text-decoration: none;
+
 }
 
 .spreadsheet-example-view img {
-  width: 11px;
-  margin-left: 4px;
+  margin-left: 3px;
+  width: 9px;
 }
 
 .report-container {
@@ -222,47 +223,6 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   margin-bottom: 1.5rem;
 }
 
-.report-submit-bar {
-  width: 70%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  border: 1px solid #d8e3e8;
-  font-family: 'Cerebri Regular', sans-serif;
-  font-weight: 400;
-}
-
-.report-google-logo {
-  background-color: #ffffff;
-  width: 10px;
-  margin-top: 4px;
-  margin-bottom: 4px;
-  margin-left: 16px;
-  margin-right: 16px;
-}
-
-.input-spreadsheet-url {
-  width: calc(100% - 64px);
-  margin-top: 4px;
-  margin-bottom: 4px;
-  margin-left: 0px;
-  margin-right: 0px;
-
-  border: none;
-  line-height: 2;
-  font-size: 13px;
-  color: #303030;
-}
-
-.input-spreadsheet-url:focus {
-  outline: none;
-}
-
-.input-spreadsheet-url::placeholder {
-  color: #303030;
-}
-
 .report-new-button {
   display: flex;
   align-items: center;
@@ -270,7 +230,7 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
 
 .report-new-text {
   font-family: 'Cerebri Regular', sans-serif;
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 400;
   line-height: 2;
   letter-spacing: .5px;
@@ -282,28 +242,12 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   padding-right: 16px;
 
   background-color: #f0f5f7;
-  color: #666666;
-  cursor: pointer;
+  color: #454545;
+  text-decoration: none;
 }
 
 .report-new-text:hover {
   background-color: #e9f0f2;
-}
-
-.report-submit-spreadsheet {
-  width: fit-content;
-  margin-top: 4px;
-  margin-bottom: 4px;
-  margin-left: 16px;
-  margin-right: 16px;
-  font-size: 16px;
-  line-height: 1;
-  color: #a1bec9;
-  cursor: pointer;
-}
-
-.report-submit-spreadsheet:hover {
-  color: #5d8391;
 }
 
 .report-top-options {
@@ -328,49 +272,118 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
 }
 
 .report-processing {
-  width: fit-content;
-  margin-top: 4rem;
+  margin-top: 8rem;
   margin-bottom: 12rem;
-  margin-left: 2rem;
 }
 
-.processing-step {
-  font-family: 'Cerebri Regular', sans-serif;
-  font-size: 13px;
+.report-loader {
+  width: 100%;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+
+  display: flex;
+  justify-content: space-between;
+}
+
+.report-loader-part {
+  width: calc(33% - 8px);
+}
+
+.report-loader-bar {
+  position: relative;
+  width: 100%;
+  height: 6px;
+}
+
+.report-loader-bar-incomplete {
+  width: 100%;
+  height: 100%;
+  background: #f2f6f7;
+}
+
+.report-loader-bar-complete {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: #cadfe6;
+}
+
+.report-loader-part-title {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 12px;
   font-weight: 400;
   line-height: 2;
   letter-spacing: 1px;
-  margin-bottom: 1.5rem;
-  display: flex;
-  align-items: center;
+  color: #666666;
+  margin-top: 0.5rem;
+  margin-left: 4px;
 }
 
-.processing-circle {
-  padding-top: 2px;
-  width: 28px;
-}
-
-.processing-circle circle {
-  fill: #dae7eb;
-  stroke: none;
-}
-
-.inactive .processing-circle circle {
-  fill: #ebebeb;
-  stroke: none;
-}
-
-.processing-text {
-  color: #000000;
-  margin-left: 1.5rem;
-}
-
-.inactive .processing-text {
-  color: #bdbdbd;
+.report-loader-part-desc {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 10px;
+  font-weight: 300;
+  letter-spacing: 1px;
+  color: #666666;
+  margin-left: 4px;
 }
 
 .report {
   margin-top: 6rem;
+}
+
+.report-spreadsheet-header {
+  display: flex;
+  justify-content: space-between;
+}
+
+.report-spreadsheet-header-title {
+  width: 50%;
+}
+
+.report-help {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  letter-spacing: 1px;
+  color: #a3a3a3;
+  width: 80%;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.report-spreadsheet-header-save-message {
+  width: 50%;
+  margin-left: auto;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  border: 1px dashed #e6e6e6;
+
+  color: #aaaaaa;
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  font-style: italic;
+  line-height: 1.5;
+  letter-spacing: .5px;
+}
+
+.save-this-report {
+  font-family: 'Cerebri Regular', sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  color: #7eaebd;
+  cursor: pointer;
+}
+
+.save-this-report:hover {
+  color: #68929e;
 }
 
 .report-spreadsheet-title {
@@ -383,18 +396,18 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
 }
 
 .report-spreadsheet-url {
-  font-family: 'Cerebri Regular', sans-serif;
+  font-family: 'Source Sans Pro', sans-serif;
   font-size: 13px;
   font-weight: 400;
   line-height: 2;
-  letter-spacing: .5px;
+  letter-spacing: 1.5px;
   color: #aaaaaa;
   text-decoration: none;
 }
 
 .report-spreadsheet-url img {
-  margin-left: 4px;
-  width: 11px;
+  margin-left: 3px;
+  width: 9px;
 }
 
 .report-plots-container {
@@ -429,43 +442,17 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   margin-bottom: 32px;
 }
 
+.report-plot-4:hover {
+  box-shadow: 2px 2px 10px rgba(204, 204, 204, 0.2);
+  cursor: pointer;
+}
+
 .report-plot-4 svg {
   margin-top: 1rem;
 }
 
 .report-svg-wrap {
-  position: relative;
   text-decoration: none;
-}
-
-.report-svg-overlay {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: #f2f8fa;
-  visibility: hidden;
-  opacity: 0;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.report-svg-overlay p {
-  color: #000000;
-  text-align: center;
-  font-family: 'Cerebri Regular', sans-serif;
-  font-size: 11px;
-  font-weight: 400;
-  letter-spacing: 1px;
-}
-
-.report-svg-wrap:hover .report-svg-overlay {
-  visibility: visible;
-  opacity: 1;
-  cursor: pointer;
 }
 
 .plot-container {
@@ -482,8 +469,60 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   justify-content: center;
 }
 
-.loading-dots {
-  width: 200px;
+.plot-loader {
+  width: 100%;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+
+  display: flex;
+  justify-content: space-between;
+}
+
+.plot-loader-part {
+  width: calc(50% - 8px);
+}
+
+.plot-loader-bar {
+  position: relative;
+  width: 100%;
+  height: 6px;
+}
+
+.plot-loader-bar-incomplete {
+  width: 100%;
+  height: 100%;
+  background: #f2f6f7;
+}
+
+.plot-loader-bar-complete {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: #cadfe6;
+}
+
+.plot-loader-part-title {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 2;
+  letter-spacing: 1px;
+  color: #666666;
+  margin-top: 0.5rem;
+  margin-left: 4px;
+}
+
+.plot-loader-part-desc {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 10px;
+  font-weight: 300;
+  letter-spacing: 1px;
+  color: #666666;
+  margin-left: 4px;
 }
 
 .plot {
@@ -494,40 +533,7 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   justify-content: space-between;
   align-items: center;
   margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.plot-header-buttons {
-  display: flex;
-}
-
-.plot-header-button {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  color: #666666;
-  margin-right: 1rem;
-}
-
-.download-svg-button {
-  background-color: #e9f0f2;
-}
-
-.embed-button {
-  background-color: #f0f5f7;
-}
-
-.plot-header-text {
-  font-family: 'Cerebri Regular', sans-serif;
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 2;
-  letter-spacing: .5px;
-  text-align: center;
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 16px;
-  padding-right: 16px;
+  margin-bottom: 5rem;
 }
 
 .plot-top-options {
@@ -536,42 +542,63 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   align-items: center;
 }
 
-.plot-spreadsheet-title {
-  font-family: 'Cerebri Regular', sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 2;
-  letter-spacing: 1px;
-  color: #aaaaaa;
-  margin-top: 4rem;
+.plot-back-button {
+  margin-left: 0;
+}
+
+.plot-spreadsheet-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+
+.plot-spreadsheet-header-title {
+  width: fit-content;
+  max-width: 75%;
 }
 
 .plot-spreadsheet-url {
-  font-size: 10px;
-  margin-left: 4px;
-  text-decoration: none;
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 2;
+  letter-spacing: 1.5px;
   color: #aaaaaa;
+  text-decoration: none;
+}
+
+.plot-spreadsheet-url img {
+  margin-left: 4px;
+  width: 10px;
 }
 
 .plot-title {
   font-family: 'Cerebri Regular', sans-serif;
   font-size: 18px;
   font-weight: 400;
-  line-height: 1;
+  line-height: 1.5;
   letter-spacing: 1px;
-  color: #666666;
-  margin-bottom: 2rem;
+  color: #000000;
 }
 
-.plot-help {
+.plot-spreadsheet-header-options {
+  width: fit-content;
+  border-left: 1px solid #e3e3e3;
+}
+
+.plot-spreadsheet-option {
+  margin-left: 1rem;
   font-family: 'Source Sans Pro', sans-serif;
-  font-size: 14px;
-  font-weight: 300;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.6;
   letter-spacing: 1px;
-  color: #aaaaaa;
-  width: 100%;
-  max-width: 300px;
-  margin-bottom: 2rem;
+  color: #666666;
+  cursor: pointer;
+}
+
+.plot-spreadsheet-option:hover {
+  color: #808080;
 }
 
 .actual-plot {
@@ -587,4 +614,8 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
 
 .hidden {
   display: none;
+}
+
+.invisible {
+  visibility: hidden;
 }
