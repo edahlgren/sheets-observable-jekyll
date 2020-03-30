@@ -2779,7 +2779,11 @@
 	      resolve();
 	    };
 
-	    script.onerror = reject;
+	    script.onerror = function (e) {
+	      var error = new Error("The script " + e.target.src + " didn't load correctly.");
+	      reject(error);
+	    };
+
 	    script.src = url;
 	    script.async = true;
 	    script.type = 'text/javascript';
@@ -2787,12 +2791,51 @@
 	  });
 	}
 
-	var errors = {
-	  SCRIPT_DOWNLOAD_ERROR: 0,
-	  GOOGLE_CLIENT_LOAD_ERROR: 1,
-	  GOOGLE_CLIENT_INIT_ERROR: 2,
-	  GOOGLE_SPREADSHEET_UNAUTHORIZED: 3
-	};
+	var STARTS_WITH = 'startsWith';
+	var $startsWith = ''[STARTS_WITH];
+
+	_export(_export.P + _export.F * _failsIsRegexp(STARTS_WITH), 'String', {
+	  startsWith: function startsWith(searchString /* , position = 0 */) {
+	    var that = _stringContext(this, searchString, STARTS_WITH);
+	    var index = _toLength(Math.min(arguments.length > 1 ? arguments[1] : undefined, that.length));
+	    var search = String(searchString);
+	    return $startsWith
+	      ? $startsWith.call(that, search, index)
+	      : that.slice(index, index + search.length) === search;
+	  }
+	});
+
+	var dP$2 = _objectDp.f;
+	var FProto = Function.prototype;
+	var nameRE = /^\s*function ([^ (]*)/;
+	var NAME$1 = 'name';
+
+	// 19.2.4.2 name
+	NAME$1 in FProto || _descriptors && dP$2(FProto, NAME$1, {
+	  configurable: true,
+	  get: function () {
+	    try {
+	      return ('' + this).match(nameRE)[1];
+	    } catch (e) {
+	      return '';
+	    }
+	  }
+	});
+
+	var ERROR_GOOGLE_RESOURCE_DOESNT_EXIST = 0,
+	    ERROR_GOOGLE_SERVER_ISSUE = 2,
+	    ERROR_GOOGLE_CLIENT_INIT = 3,
+	    ERROR_GOOGLE_CLIENT_MISCONFIGURED = 4,
+	    ERROR_NO_SPREADSHEET = 6,
+	    ERROR_SPREADSHEET_VALUES_API_GET = 8,
+	    ERROR_BAD_SPREADSHEET_RANGE = 9;
+
+	function makeKnownError(code, error) {
+	  var known_error = new Error();
+	  known_error.name = "KnownError-" + code;
+	  known_error.message = error.message;
+	  return known_error;
+	}
 
 	var clientId = '610692011464-m1oi9ddi7u31h92e09lg5s970luvak9a.apps.googleusercontent.com',
 	    apiKey = 'AIzaSyDCdKkMRyLWNjtTaUBYRcJFLqLEWEGDgg8',
@@ -2802,19 +2845,21 @@
 	function load_script() {
 	  return new Promise(function (resolve, reject) {
 	    loadScript("https://apis.google.com/js/api.js").then(resolve).catch(function (error) {
-	      console.log("[error: load script]", error);
-	      reject(errors.SCRIPT_DOWNLOAD_ERROR);
+	      error = makeKnownError(ERROR_GOOGLE_RESOURCE_DOESNT_EXIST, error);
+	      reject(error);
 	    });
 	  });
 	}
 
 	function load_client() {
 	  return new Promise(function (resolve, reject) {
+	    if (!gapi) ;
+
 	    gapi.load('client:auth2', {
 	      callback: resolve,
 	      onerror: function onerror(error) {
-	        console.log("[error: load auth2 client]", error);
-	        reject(errors.GOOGLE_CLIENT_LOAD_ERROR);
+	        error = makeKnownError(ERROR_GOOGLE_RESOURCE_DOESNT_EXIST, error);
+	        reject(error);
 	      }
 	    });
 	  });
@@ -2822,15 +2867,37 @@
 
 	function init_client() {
 	  return new Promise(function (resolve, reject) {
-	    gapi.client.init({
+	    if (!gapi) ;
+
+	    if (!gapi.client) ;
+
+	    var config = {
 	      clientId: clientId,
 	      apiKey: apiKey,
 	      discoveryDocs: discoveryDocs,
 	      scope: scopes.join(' ')
-	    }).then(resolve).catch(function (error) {
-	      console.log("[error: init client]", error);
-	      reject(errors.GOOGLE_CLIENT_INIT_ERROR);
-	    });
+	    };
+
+	    try {
+	      gapi.client.init(config).then(function () {
+	        if (!gapi.auth2 || !gapi.auth2.getAuthInstance()) {
+	          throw new Error("config: " + JSON.stringify(config, null, 2));
+	        }
+
+	        resolve();
+	      }).catch(function (error) {
+	        if (!gapi.auth2 || !gapi.auth2.getAuthInstance()) {
+	          error = makeKnownError(ERROR_GOOGLE_CLIENT_MISCONFIGURED, error);
+	        } else {
+	          error = makeKnownError(ERROR_GOOGLE_CLIENT_INIT, error);
+	        }
+
+	        reject(error);
+	      });
+	    } catch (error) {
+	      error = makeKnownError(ERROR_GOOGLE_CLIENT_INIT, error);
+	      reject(error);
+	    }
 	  });
 	}
 
@@ -2911,21 +2978,102 @@
 	  },
 	  getSpreadsheetMetadata: function getSpreadsheetMetadata(id) {
 	    return new Promise(function (resolve, reject) {
-	      gapi.client.sheets.spreadsheets.get({
+	      if (!gapi) ;
+
+	      if (!gapi.client) ;
+
+	      if (!gapi.client.sheets) ;
+
+	      var config = {
 	        spreadsheetId: id
-	      }).then(function (response) {
-	        resolve(response.result);
-	      }).catch(reject);
+	      };
+
+	      try {
+	        gapi.client.sheets.spreadsheets.get(config).then(function (response) {
+	          resolve(response.result);
+	        }).catch(function (response) {
+	          var error_msg = response.result.error.message,
+	              error = new Error(error_msg + " config: " + JSON.stringify(config, null, 2));
+
+	          switch (response.result.error.status) {
+	            case "NOT_FOUND":
+	              error = makeKnownError(ERROR_NO_SPREADSHEET, error);
+	              break;
+
+	            default:
+	              if (response.result.error.code >= 500) {
+	                error = makeKnownError(ERROR_GOOGLE_SERVER_ISSUE, error);
+	              } else {
+	                error = makeKnownError(ERROR_SPREADSHEET_VALUES_API_GET, error);
+	              }
+
+	              break;
+	          }
+
+	          reject(error);
+	        });
+	      } catch (error) {
+	        error = makeKnownError(ERROR_SPREADSHEET_VALUES_API_GET, error);
+	        reject(error);
+	      }
 	    });
 	  },
 	  getSpreadsheetValues: function getSpreadsheetValues(id, range) {
 	    return new Promise(function (resolve, reject) {
-	      gapi.client.sheets.spreadsheets.values.get({
+	      if (!gapi) ;
+
+	      if (!gapi.client) ;
+
+	      if (!gapi.client.sheets) ;
+
+	      var config = {
 	        spreadsheetId: id,
 	        range: range
-	      }).then(function (response) {
-	        resolve(response.result.values);
-	      }).catch(reject);
+	      };
+
+	      try {
+	        gapi.client.sheets.spreadsheets.values.get(config).then(function (response) {
+	          resolve(response.result.values);
+	        }).catch(function (response) {
+	          // Handle weird case when range is messed up
+	          if (response.result == false) {
+	            var error = new Error("config: " + JSON.stringify(config, null, 2));
+
+	            if (response.status == 404) {
+	              error = makeKnownError(ERROR_BAD_SPREADSHEET_RANGE, error);
+	            } else {
+	              error = makeKnownError(ERROR_SPREADSHEET_VALUES_API_GET, error);
+	            }
+
+	            reject(error);
+	            return;
+	          } // Handle the common case
+
+
+	          var error_msg = response.result.error.message,
+	              error = new Error(error_msg + " config: " + JSON.stringify(config, null, 2));
+
+	          switch (response.result.error.status) {
+	            case "NOT_FOUND":
+	              error = makeKnownError(ERROR_NO_SPREADSHEET, error);
+	              break;
+
+	            default:
+	              if (response.result.error.code >= 500) {
+	                error = makeKnownError(ERROR_GOOGLE_SERVER_ISSUE, error);
+	              } else {
+	                error = makeKnownError(ERROR_SPREADSHEET_VALUES_API_GET, error);
+	              }
+
+	              break;
+	          }
+
+	          reject(error);
+	        });
+	      } catch (error) {
+	        error = makeKnownError(ERROR_SPREADSHEET_VALUES_API_GET, error);
+	        reject(error);
+	      }
 	    });
 	  }
 	}; // Whether the client has been initialized or not
@@ -2939,12 +3087,18 @@
 	    }
 
 	    initialize(loader).then(function (timing) {
+	      if (!gapi) ;
+
+	      if (!gapi.auth2) ;
+
+	      if (!gapi.auth2.getAuthInstance()) ;
+
 	      setup_auth(auth_config);
 	      initialized = true;
 	      resolve(api);
 	    }).catch(reject);
 	  });
-	}
+	} // Helper functions, no API needed
 
 	function iteration_data_xy(i, fields, data) {
 	  var x = fields.get(i.x),

@@ -2736,7 +2736,11 @@
 	      resolve();
 	    };
 
-	    script.onerror = reject;
+	    script.onerror = function (e) {
+	      var error = new Error("The script " + e.target.src + " didn't load correctly.");
+	      reject(error);
+	    };
+
 	    script.src = url;
 	    script.async = true;
 	    script.type = 'text/javascript';
@@ -2744,12 +2748,225 @@
 	  });
 	}
 
-	var errors$1 = {
-	  SCRIPT_DOWNLOAD_ERROR: 0,
-	  GOOGLE_CLIENT_LOAD_ERROR: 1,
-	  GOOGLE_CLIENT_INIT_ERROR: 2,
-	  GOOGLE_SPREADSHEET_UNAUTHORIZED: 3
+	// helper for String#{startsWith, endsWith, includes}
+
+
+
+	var _stringContext = function (that, searchString, NAME) {
+	  if (_isRegexp(searchString)) throw TypeError('String#' + NAME + " doesn't accept regex!");
+	  return String(_defined(that));
 	};
+
+	var MATCH$1 = _wks('match');
+	var _failsIsRegexp = function (KEY) {
+	  var re = /./;
+	  try {
+	    '/./'[KEY](re);
+	  } catch (e) {
+	    try {
+	      re[MATCH$1] = false;
+	      return !'/./'[KEY](re);
+	    } catch (f) { /* empty */ }
+	  } return true;
+	};
+
+	var STARTS_WITH = 'startsWith';
+	var $startsWith = ''[STARTS_WITH];
+
+	_export(_export.P + _export.F * _failsIsRegexp(STARTS_WITH), 'String', {
+	  startsWith: function startsWith(searchString /* , position = 0 */) {
+	    var that = _stringContext(this, searchString, STARTS_WITH);
+	    var index = _toLength(Math.min(arguments.length > 1 ? arguments[1] : undefined, that.length));
+	    var search = String(searchString);
+	    return $startsWith
+	      ? $startsWith.call(that, search, index)
+	      : that.slice(index, index + search.length) === search;
+	  }
+	});
+
+	var dP$2 = _objectDp.f;
+	var FProto = Function.prototype;
+	var nameRE = /^\s*function ([^ (]*)/;
+	var NAME$1 = 'name';
+
+	// 19.2.4.2 name
+	NAME$1 in FProto || _descriptors && dP$2(FProto, NAME$1, {
+	  configurable: true,
+	  get: function () {
+	    try {
+	      return ('' + this).match(nameRE)[1];
+	    } catch (e) {
+	      return '';
+	    }
+	  }
+	});
+
+	var ERROR_GOOGLE_RESOURCE_DOESNT_EXIST = 0,
+	    ERROR_APP_RESOURCE_DOESNT_EXIST = 1,
+	    ERROR_GOOGLE_SERVER_ISSUE = 2,
+	    ERROR_GOOGLE_CLIENT_INIT = 3,
+	    ERROR_GOOGLE_CLIENT_MISCONFIGURED = 4,
+	    ERROR_SPREADSHEET_UNAUTHORIZED = 5,
+	    ERROR_NO_SPREADSHEET = 6,
+	    ERROR_SPREADSHEET_API_GET = 7,
+	    ERROR_SPREADSHEET_VALUES_API_GET = 8,
+	    ERROR_BAD_SPREADSHEET_RANGE = 9;
+	var ISSUE_GOOGLE_RESOURCE = 0,
+	    ISSUE_GOOGLE_API = 1,
+	    ISSUE_SPREADSHEET_ACCESS = 2,
+	    ISSUE_SPREADSHEET_DOESNT_EXIST = 3,
+	    ISSUE_NO_FIELDS_SHEET = 4,
+	    ISSUE_BAD_FIELDS_SHEET = 5,
+	    ISSUE_FIELDS_SHEET_SYNC = 6;
+
+	function errorToString(error_code) {
+	  switch (error_code) {
+	    case ERROR_GOOGLE_RESOURCE_DOESNT_EXIST:
+	      return "Google resource doesn't exit";
+
+	    case ERROR_APP_RESOURCE_DOESNT_EXIST:
+	      return "App resource doesn't exit";
+
+	    case ERROR_GOOGLE_SERVER_ISSUE:
+	      return "Google API server issue";
+
+	    case ERROR_GOOGLE_CLIENT_INIT:
+	      return "Problem using the Google API client";
+
+	    case ERROR_GOOGLE_CLIENT_MISCONFIGURED:
+	      return "The Google API client was misconfigured";
+
+	    case ERROR_SPREADSHEET_UNAUTHORIZED:
+	      return "Unauthorized access to spreadsheet";
+
+	    case ERROR_NO_SPREADSHEET:
+	      return "Spreadsheet doesn't exist";
+
+	    case ERROR_SPREADSHEET_API_GET:
+	      return "Issue making API request sheets.spreadsheets.get";
+
+	    case ERROR_SPREADSHEET_VALUES_API_GET:
+	      return "Issue making API request sheets.spreadsheets.values.get";
+
+	    case ERROR_BAD_SPREADSHEET_RANGE:
+	      return "Bad spreadsheet range";
+
+	    default:
+	      return "App code general issue";
+	  }
+	}
+
+	function issueToString(issue_code) {
+	  switch (issue_code) {
+	    case ISSUE_GOOGLE_RESOURCE:
+	      return "A necessary file provided by Google can't be downloaded right now. The best thing to do is to check your internet connection or try again in 15 minutes.";
+
+	    case ISSUE_GOOGLE_API:
+	      return "A Google API needed by this demo isn't working right now. This type of issue is usually fixed by Google fairly quickly. The best thing to do is to try again in 15 minutes.";
+
+	    case ISSUE_SPREADSHEET_ACCESS:
+	      return "It looks like you don't have access to this spreadsheet. Make sure the owner of this spreadsheet has shared it with you and then try again.";
+
+	    case ISSUE_SPREADSHEET_DOESNT_EXIST:
+	      return "It looks like this doesn't refer to a Google spreadsheet. That can happen if you accidently changed the 'id' in the url above, or if you used an unsupported spreadsheet. The best thing to do is to click the 'New Spreadsheet' button above, choose one of the supported sample spreadsheets, and try again.";
+
+	    case ISSUE_NO_FIELDS_SHEET:
+	    case ISSUE_BAD_FIELDS_SHEET:
+	    case ISSUE_FIELDS_SHEET_SYNC:
+	      return "It looks like you're trying to visualize a spreadsheet that isn't supported yet. The best thing to do is to click the 'New Spreadsheet' button above and choose one of the sample spreadsheets.";
+
+	    default:
+	      return "";
+	  }
+	}
+
+	function errorToIssue(error_code) {
+	  switch (error_code) {
+	    case ERROR_GOOGLE_RESOURCE_DOESNT_EXIST:
+	      return ISSUE_GOOGLE_RESOURCE;
+
+	    case ERROR_GOOGLE_SERVER_ISSUE:
+	    case ERROR_GOOGLE_CLIENT_INIT:
+	      return ISSUE_GOOGLE_API;
+
+	    case ERROR_SPREADSHEET_UNAUTHORIZED:
+	      return ISSUE_SPREADSHEET_ACCESS;
+
+	    case ERROR_NO_SPREADSHEET:
+	      return ISSUE_SPREADSHEET_DOESNT_EXIST;
+
+	    default:
+	      return -1;
+	  }
+	}
+
+	function isAuthIssue(error) {
+	  if (!isKnownError(error)) return false;
+	  var code = parseErrorCode(error);
+	  if (code < 0) return false;
+	  return code == ERROR_SPREADSHEET_UNAUTHORIZED;
+	}
+
+	function makeKnownError(code, error) {
+	  var known_error = new Error();
+	  known_error.name = "KnownError-" + code;
+	  known_error.message = error.message;
+	  return known_error;
+	}
+
+	function isKnownError(error) {
+	  return error.name.startsWith("KnownError-");
+	}
+
+	function parseErrorCode(error) {
+	  var parts = error.name.split("-"),
+	      code = parseInt(parts[1], 10);
+	  return isNaN(code) ? -1 : code;
+	}
+
+	function showLoadingKnownIssue(issue_code, error) {
+	  var issue = document.getElementById("loading-issue"),
+	      issue_container = issue.querySelector(".issue-help-container"),
+	      issue_help = issue.querySelector(".issue-help"),
+	      bug_report = issue.querySelector(".bug-report");
+
+	  if (!issue_code) {
+	    var error_code = parseErrorCode(error);
+	    issue_code = errorToIssue(error_code);
+	  }
+
+	  var issue_message = issueToString(issue_code);
+
+	  if (issue_message === "") {
+	    return false;
+	  }
+
+	  issue_help.textContent = issue_message;
+	  bug_report.classList.add("hidden");
+	  issue_container.classList.remove("hidden");
+	  issue.classList.remove("hidden");
+	  console.error("[known error]", error);
+	  return true;
+	}
+
+	function showLoadingBug(step, error) {
+	  var issue = document.getElementById("loading-issue"),
+	      bug_report = issue.querySelector(".bug-report"),
+	      step_message = issue.querySelector(".step-description"),
+	      issue_message = issue.querySelector(".issue-description"),
+	      details_message = issue.querySelector(".details-description");
+	  step_message.textContent = step;
+	  var error_code = -1;
+
+	  if (isKnownError(error)) {
+	    error_code = parseErrorCode(error);
+	  }
+
+	  issue_message.textContent = errorToString(error_code);
+	  details_message.textContent = error.message;
+	  bug_report.classList.remove("hidden");
+	  issue.classList.remove("hidden");
+	} // Export error codes
 
 	var clientId = '610692011464-m1oi9ddi7u31h92e09lg5s970luvak9a.apps.googleusercontent.com',
 	    apiKey = 'AIzaSyDCdKkMRyLWNjtTaUBYRcJFLqLEWEGDgg8',
@@ -2759,19 +2976,21 @@
 	function load_script() {
 	  return new Promise(function (resolve, reject) {
 	    loadScript("https://apis.google.com/js/api.js").then(resolve).catch(function (error) {
-	      console.log("[error: load script]", error);
-	      reject(errors$1.SCRIPT_DOWNLOAD_ERROR);
+	      error = makeKnownError(ERROR_GOOGLE_RESOURCE_DOESNT_EXIST, error);
+	      reject(error);
 	    });
 	  });
 	}
 
 	function load_client() {
 	  return new Promise(function (resolve, reject) {
+	    if (!gapi) ;
+
 	    gapi.load('client:auth2', {
 	      callback: resolve,
 	      onerror: function onerror(error) {
-	        console.log("[error: load auth2 client]", error);
-	        reject(errors$1.GOOGLE_CLIENT_LOAD_ERROR);
+	        error = makeKnownError(ERROR_GOOGLE_RESOURCE_DOESNT_EXIST, error);
+	        reject(error);
 	      }
 	    });
 	  });
@@ -2779,15 +2998,37 @@
 
 	function init_client() {
 	  return new Promise(function (resolve, reject) {
-	    gapi.client.init({
+	    if (!gapi) ;
+
+	    if (!gapi.client) ;
+
+	    var config = {
 	      clientId: clientId,
 	      apiKey: apiKey,
 	      discoveryDocs: discoveryDocs,
 	      scope: scopes.join(' ')
-	    }).then(resolve).catch(function (error) {
-	      console.log("[error: init client]", error);
-	      reject(errors$1.GOOGLE_CLIENT_INIT_ERROR);
-	    });
+	    };
+
+	    try {
+	      gapi.client.init(config).then(function () {
+	        if (!gapi.auth2 || !gapi.auth2.getAuthInstance()) {
+	          throw new Error("config: " + JSON.stringify(config, null, 2));
+	        }
+
+	        resolve();
+	      }).catch(function (error) {
+	        if (!gapi.auth2 || !gapi.auth2.getAuthInstance()) {
+	          error = makeKnownError(ERROR_GOOGLE_CLIENT_MISCONFIGURED, error);
+	        } else {
+	          error = makeKnownError(ERROR_GOOGLE_CLIENT_INIT, error);
+	        }
+
+	        reject(error);
+	      });
+	    } catch (error) {
+	      error = makeKnownError(ERROR_GOOGLE_CLIENT_INIT, error);
+	      reject(error);
+	    }
 	  });
 	}
 
@@ -2868,21 +3109,102 @@
 	  },
 	  getSpreadsheetMetadata: function getSpreadsheetMetadata(id) {
 	    return new Promise(function (resolve, reject) {
-	      gapi.client.sheets.spreadsheets.get({
+	      if (!gapi) ;
+
+	      if (!gapi.client) ;
+
+	      if (!gapi.client.sheets) ;
+
+	      var config = {
 	        spreadsheetId: id
-	      }).then(function (response) {
-	        resolve(response.result);
-	      }).catch(reject);
+	      };
+
+	      try {
+	        gapi.client.sheets.spreadsheets.get(config).then(function (response) {
+	          resolve(response.result);
+	        }).catch(function (response) {
+	          var error_msg = response.result.error.message,
+	              error = new Error(error_msg + " config: " + JSON.stringify(config, null, 2));
+
+	          switch (response.result.error.status) {
+	            case "NOT_FOUND":
+	              error = makeKnownError(ERROR_NO_SPREADSHEET, error);
+	              break;
+
+	            default:
+	              if (response.result.error.code >= 500) {
+	                error = makeKnownError(ERROR_GOOGLE_SERVER_ISSUE, error);
+	              } else {
+	                error = makeKnownError(ERROR_SPREADSHEET_VALUES_API_GET, error);
+	              }
+
+	              break;
+	          }
+
+	          reject(error);
+	        });
+	      } catch (error) {
+	        error = makeKnownError(ERROR_SPREADSHEET_VALUES_API_GET, error);
+	        reject(error);
+	      }
 	    });
 	  },
 	  getSpreadsheetValues: function getSpreadsheetValues(id, range) {
 	    return new Promise(function (resolve, reject) {
-	      gapi.client.sheets.spreadsheets.values.get({
+	      if (!gapi) ;
+
+	      if (!gapi.client) ;
+
+	      if (!gapi.client.sheets) ;
+
+	      var config = {
 	        spreadsheetId: id,
 	        range: range
-	      }).then(function (response) {
-	        resolve(response.result.values);
-	      }).catch(reject);
+	      };
+
+	      try {
+	        gapi.client.sheets.spreadsheets.values.get(config).then(function (response) {
+	          resolve(response.result.values);
+	        }).catch(function (response) {
+	          // Handle weird case when range is messed up
+	          if (response.result == false) {
+	            var error = new Error("config: " + JSON.stringify(config, null, 2));
+
+	            if (response.status == 404) {
+	              error = makeKnownError(ERROR_BAD_SPREADSHEET_RANGE, error);
+	            } else {
+	              error = makeKnownError(ERROR_SPREADSHEET_VALUES_API_GET, error);
+	            }
+
+	            reject(error);
+	            return;
+	          } // Handle the common case
+
+
+	          var error_msg = response.result.error.message,
+	              error = new Error(error_msg + " config: " + JSON.stringify(config, null, 2));
+
+	          switch (response.result.error.status) {
+	            case "NOT_FOUND":
+	              error = makeKnownError(ERROR_NO_SPREADSHEET, error);
+	              break;
+
+	            default:
+	              if (response.result.error.code >= 500) {
+	                error = makeKnownError(ERROR_GOOGLE_SERVER_ISSUE, error);
+	              } else {
+	                error = makeKnownError(ERROR_SPREADSHEET_VALUES_API_GET, error);
+	              }
+
+	              break;
+	          }
+
+	          reject(error);
+	        });
+	      } catch (error) {
+	        error = makeKnownError(ERROR_SPREADSHEET_VALUES_API_GET, error);
+	        reject(error);
+	      }
 	    });
 	  }
 	}; // Whether the client has been initialized or not
@@ -2896,126 +3218,18 @@
 	    }
 
 	    initialize(loader).then(function (timing) {
+	      if (!gapi) ;
+
+	      if (!gapi.auth2) ;
+
+	      if (!gapi.auth2.getAuthInstance()) ;
+
 	      setup_auth(auth_config);
 	      initialized = true;
 	      resolve(api);
 	    }).catch(reject);
 	  });
-	}
-
-	// Imports ------------------------------------
-
-	var ACCESS_SPREADSHEET_BEFORE_AUTH = 0,
-	    ACCESS_SPREADSHEET_AFTER_AUTH = 1,
-	    CHOOSE_SPREADSHEET = 2,
-	    READ_FIELDS_DATA = 3,
-	    ORGANIZE_FIELDS_DATA = 4,
-	    CHOOSE_VISUALIZATIONS = 5,
-	    DOWNLOAD_DATA = 6,
-	    MATCH_HEADER_TO_FIELDS = 7,
-	    RENDER_VISUALIZATIONS = 8;
-	var GENERAL_GOOGLE_ISSUE = 0,
-	    SPREADSHEET_ACCESS_ISSUE = 1,
-	    NEED_FIELDS_SHEET = 2,
-	    FIELDS_SHEET_IS_MALFORMED = 3; // DOM ----------------------------------------
-	// Sign in message
-
-	var authorize_message = document.getElementById("authorize-container"); // General processing issues
-
-	var step1_issue = document.getElementById("issue-step-1"),
-	    step2_issue = document.getElementById("issue-step-2"),
-	    step3_issue = document.getElementById("issue-step-3"),
-	    step4_issue = document.getElementById("issue-step-4"),
-	    step5_issue = document.getElementById("issue-step-5"); // Help ----------------------------------------
-
-	function show_help(step, error) {
-	  switch (step) {
-	    case ACCESS_SPREADSHEET_BEFORE_AUTH:
-	      if (error == errors$1.GOOGLE_SPREADSHEET_UNAUTHORIZED) {
-	        authorize_message.classList.remove("hidden");
-	        return;
-	      }
-
-	      general_help(step1_issue, GENERAL_GOOGLE_ISSUE);
-	      return;
-
-	    case ACCESS_SPREADSHEET_AFTER_AUTH:
-	      if (error == errors$1.GOOGLE_SPREADSHEET_UNAUTHORIZED) {
-	        general_help(step1_issue, SPREADSHEET_ACCESS_ISSUE);
-	        return;
-	      }
-
-	      general_help(step1_issue, GENERAL_GOOGLE_ISSUE);
-	      return;
-
-	    case CHOOSE_SPREADSHEET:
-	      general_help(step2_issue, NEED_FIELDS_SHEET);
-	      return;
-
-	    case READ_FIELDS_DATA:
-	      general_help(step2_issue, GENERAL_GOOGLE_ISSUE);
-	      return;
-
-	    case ORGANIZE_FIELDS_DATA:
-	      general_help(step2_issue, FIELDS_SHEET_IS_MALFORMED);
-	      return;
-
-	    default:
-	      console.log("[error: step" + step + "]", error);
-	      console.error("Unknown step, can't show help", step);
-	  }
-	}
-
-	var ISSUE_NO_FIELDS_SHEET = "\n  <div class=\"help-message message-text\">\n    <p class=\"help-paragraph\">Temporary issue: Use a spreadsheet that has at least one sheet that ends in \".fields\" that describes the fields of another sheet.</p>\n  </div>\n";
-	var ISSUE_MALFORMED_FIELDS_SHEET = "\n  <div class=\"help-message message-text\">\n    <p class=\"help-paragraph\">Temporary issue: One of the sheets that ends in \".fields\" isn't formatted in a way that can be understood by this app.</p>\n  </div>\n";
-	var ISSUE_PRIVATE_SPREADSHEET = "\n  <div class=\"help-message message-text\">\n    <p class=\"help-paragraph\">This is a spreadsheet that you don't have access to.</p>\n    <p class=\"help-paragraph mt-0.5\">Try another spreadsheet or choose one of the example spreadsheets below.</p>\n  </div>\n";
-	var ISSUE_WITH_GOOGLE = "\n  <div class=\"help-message message-text\">\n    <p class=\"help-paragraph\">There's an issue with Google at the moment. Unfortunately that means that this spreadsheet can't be visualized right now. The best thing to do is to wait 15 minutes and try again. This type of issue normally resolves quickly on its own.</p>\n  </div>\n";
-
-	function general_help(container, type) {
-	  var text = "";
-
-	  switch (type) {
-	    case SPREADSHEET_ACCESS_ISSUE:
-	      text = ISSUE_PRIVATE_SPREADSHEET;
-	      break;
-
-	    case NEED_FIELDS_SHEET:
-	      text = ISSUE_NO_FIELDS_SHEET;
-	      break;
-
-	    case FIELDS_SHEET_IS_MALFORMED:
-	      text = ISSUE_MALFORMED_FIELDS_SHEET;
-	      break;
-
-	    default:
-	      text = ISSUE_WITH_GOOGLE;
-	      break;
-	  }
-
-	  var parser = new DOMParser();
-	  var doc = parser.parseFromString(text, "text/html");
-	  console.log("help message", doc.body.firstChild);
-
-	  while (container.firstChild) {
-	    container.removeChild(container.lastChild);
-	  }
-
-	  container.appendChild(doc.body.firstChild);
-	  container.classList.remove("hidden");
-	}
-
-	var steps = {
-	  ACCESS_SPREADSHEET_BEFORE_AUTH: ACCESS_SPREADSHEET_BEFORE_AUTH,
-	  ACCESS_SPREADSHEET_AFTER_AUTH: ACCESS_SPREADSHEET_AFTER_AUTH,
-	  CHOOSE_SPREADSHEET: CHOOSE_SPREADSHEET,
-	  READ_FIELDS_DATA: READ_FIELDS_DATA,
-	  ORGANIZE_FIELDS_DATA: ORGANIZE_FIELDS_DATA,
-	  CHOOSE_VISUALIZATIONS: CHOOSE_VISUALIZATIONS,
-	  DOWNLOAD_DATA: DOWNLOAD_DATA,
-	  MATCH_HEADER_TO_FIELDS: MATCH_HEADER_TO_FIELDS,
-	  RENDER_VISUALIZATIONS: RENDER_VISUALIZATIONS,
-	  show_help: show_help
-	};
+	} // Helper functions, no API needed
 
 	// most Object methods by ES6 should accept primitives
 
@@ -3562,10 +3776,7 @@
 	  return div;
 	}
 
-	// Top submit new spreadsheet bar
-
-	var spreadsheet_submit = document.getElementById("submit-spreadsheet"),
-	    spreadsheet_input = document.getElementById("spreadsheet-url"); // Loading report
+	// Loading report
 
 	var processing = document.getElementById("report-processing");
 	var part1 = document.getElementById("report-loader-part1"),
@@ -3578,19 +3789,68 @@
 	    load_part3_bar = part3.querySelector(".report-loader-bar-complete"),
 	    load_part3_desc = part3.querySelector(".report-loader-part-desc"); // Sign in message
 
-	var authorize_message$1 = document.getElementById("authorize-container"),
+	var authorize_message = document.getElementById("authorize-container"),
 	    signin_button = document.getElementById("signin"); // Contains the report
 
 	var report = document.getElementById("report"); // Request channels ---------------------------
 
 	var request_channel = null,
-	    response_channels = new Map(); // Execute ------------------------------------
+	    response_channels = new Map(); // Define the processing steps ---------------
+
+	var STEP_BEFORE_AUTH = 0,
+	    STEP_AFTER_AUTH = 1,
+	    STEP_GET_METADATA = 2,
+	    STEP_CHOOSE_SHEET = 3,
+	    STEP_DOWNLOAD_FIELDS = 4,
+	    STEP_DOWNLOAD_DATA = 5,
+	    STEP_ORGANIZE_FIELDS = 6,
+	    STEP_MATCH_FIELDS = 7,
+	    STEP_CHOOSE_VISUALIZATIONS = 8,
+	    STEP_MAKE_VISUALIZATIONS = 9;
+
+	function stepToString(step) {
+	  switch (step) {
+	    case STEP_BEFORE_AUTH:
+	      return "Before authorization";
+
+	    case STEP_AFTER_AUTH:
+	      return "After authorization";
+
+	    case STEP_GET_METADATA:
+	      return "Getting spreadsheet metadata";
+
+	    case STEP_CHOOSE_SHEET:
+	      return "Choosing sheet";
+
+	    case STEP_DOWNLOAD_FIELDS:
+	      return "Downloading fields";
+
+	    case STEP_DOWNLOAD_DATA:
+	      return "Downloading data";
+
+	    case STEP_ORGANIZE_FIELDS:
+	      return "Organizing fields";
+
+	    case STEP_MATCH_FIELDS:
+	      return "Matching header to fields";
+
+	    case STEP_CHOOSE_VISUALIZATIONS:
+	      return "Choosing visualizations";
+
+	    case STEP_MAKE_VISUALIZATIONS:
+	      return "Making visualizations";
+
+	    default:
+	      return "unknown";
+	  }
+	} // Execute ------------------------------------
 	// TODO: Cancel and re-process on submitting new URL
+
 
 	var spreadsheetId = refresh_id();
 
 	if (spreadsheetId) {
-	  process$3(spreadsheetId, steps.ACCESS_SPREADSHEET_BEFORE_AUTH);
+	  process$3(spreadsheetId, STEP_BEFORE_AUTH);
 	} // Initialize top bar ------------------------
 
 
@@ -3617,16 +3877,17 @@
 	  }
 
 	  return id;
-	} // Define the processing steps ---------------
+	} // Actally do processing steps ---------------
 
 
-	function make_auth(on_signin) {
-	  return {
-	    signin: [{
-	      element: signin_button,
-	      afterAuth: on_signin
-	    }]
-	  };
+	function showIssue(step, error) {
+	  if (!showLoadingKnownIssue(null, error)) {
+	    showLoadingBug(stepToString(step), error);
+	  }
+	}
+
+	function showBug(step, error) {
+	  showLoadingBug(stepToString(step), error);
 	}
 
 	function process$3(_x, _x2) {
@@ -3634,7 +3895,7 @@
 	}
 
 	function _process() {
-	  _process = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(id, step) {
+	  _process = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(id, firstStep) {
 	    var api, metadata, sheet, fields, designs, data, auth, render_config;
 	    return regeneratorRuntime.wrap(function _callee$(_context) {
 	      while (1) {
@@ -3643,12 +3904,21 @@
 	            console.log("processing [" + id + "]");
 	            api = null, metadata = null, sheet = null, fields = null, designs = null, data = null; // Make auth config (signin / signout buttons)
 
-	            auth = make_auth({
-	              afterAuth: function afterAuth() {
-	                authorize_message$1.classList.add("hidden");
-	                process$3(id, steps.ACCESS_SPREADSHEET_AFTER_AUTH);
-	              }
-	            }); // Part 1 --------------------------------------
+	            auth = {
+	              signin: [{
+	                element: signin_button,
+	                afterAuth: function afterAuth() {
+	                  authorize_message.classList.add("hidden");
+	                  process$3(id, STEP_AFTER_AUTH);
+	                }
+	              }]
+	            }; // TODO: Test no gapi, gapi.client, gapi.auth2
+	            // TODO: Test choose_single_sheet
+	            // TODO: Test organize_fields
+	            // TODO: Test match_header_to_fields
+	            // TODO: Test load_designs
+	            // TODO: Test render_visualizations
+	            // Part 1 --------------------------------------
 	            // Authenticating
 
 	            _context.prev = 3;
@@ -3660,142 +3930,189 @@
 
 	          case 6:
 	            api = _context.sent;
-	            _context.next = 14;
+	            _context.next = 13;
 	            break;
 
 	          case 9:
 	            _context.prev = 9;
 	            _context.t0 = _context["catch"](3);
-	            console.log("[error: get google api]", _context.t0);
-	            steps.show_help(step, _context.t0);
+	            showIssue(firstStep, _context.t0);
 	            return _context.abrupt("return");
 
-	          case 14:
+	          case 13:
 	            // Getting metadata
 	            load_part1_desc.textContent = "Getting metadata";
-	            _context.prev = 15;
-	            _context.next = 18;
+	            _context.prev = 14;
+	            _context.next = 17;
 	            return api.getSpreadsheetMetadata(id);
 
-	          case 18:
+	          case 17:
 	            metadata = _context.sent;
-	            _context.next = 26;
+	            _context.next = 31;
 	            break;
 
-	          case 21:
-	            _context.prev = 21;
-	            _context.t1 = _context["catch"](15);
-	            console.log("[error: access spreadsheet]", _context.t1);
-	            steps.show_help(step, _context.t1);
+	          case 20:
+	            _context.prev = 20;
+	            _context.t1 = _context["catch"](14);
+
+	            if (!isAuthIssue(_context.t1)) {
+	              _context.next = 29;
+	              break;
+	            }
+
+	            if (!(firstStep == STEP_BEFORE_AUTH)) {
+	              _context.next = 26;
+	              break;
+	            }
+
+	            authorize_message.classList.remove("hidden");
 	            return _context.abrupt("return");
 
 	          case 26:
+	            if (!(firstStep == STEP_AFTER_AUTH)) {
+	              _context.next = 29;
+	              break;
+	            }
+
+	            showLoadingKnownIssue(ISSUE_SPREADSHEET_ACCESS);
+	            return _context.abrupt("return");
+
+	          case 29:
+	            showIssue(STEP_GET_METADATA, _context.t1);
+	            return _context.abrupt("return");
+
+	          case 31:
 	            load_part1_bar.style.width = 45 + "%"; // Choosing sheet
 
 	            load_part1_desc.textContent = "Choosing sheet";
-	            step = steps.CHOOSE_SPREADSHEET;
+	            _context.prev = 33;
 	            sheet = choose_single_sheet(metadata.sheets);
 
 	            if (sheet) {
-	              _context.next = 33;
+	              _context.next = 38;
 	              break;
 	            }
 
-	            steps.show_help(step);
+	            showLoadingKnownIssue(ISSUE_NO_FIELDS_SHEET);
 	            return _context.abrupt("return");
 
-	          case 33:
+	          case 38:
+	            _context.next = 43;
+	            break;
+
+	          case 40:
+	            _context.prev = 40;
+	            _context.t2 = _context["catch"](33);
+	            showBug(STEP_CHOOSE_SHEET, _context.t2);
+
+	          case 43:
 	            load_part1_bar.style.width = 50 + "%"; // Reading fields
 
 	            load_part1_desc.textContent = "Reading spreadsheet fields";
-	            step = steps.READ_FIELDS_DATA;
-	            _context.prev = 36;
-	            _context.next = 39;
+	            _context.prev = 45;
+	            _context.next = 48;
 	            return api.getSpreadsheetValues(id, sheet + ".fields");
 
-	          case 39:
+	          case 48:
 	            fields = _context.sent;
-	            _context.next = 46;
+	            _context.next = 55;
 	            break;
 
-	          case 42:
-	            _context.prev = 42;
-	            _context.t2 = _context["catch"](36);
-	            steps.show_help(step, _context.t2);
+	          case 51:
+	            _context.prev = 51;
+	            _context.t3 = _context["catch"](45);
+	            showIssue(STEP_DOWNLOAD_FIELDS, _context.t3);
 	            return _context.abrupt("return");
 
-	          case 46:
+	          case 55:
 	            load_part1_bar.style.width = 70 + "%"; // Reading data
 
 	            load_part1_desc.textContent = "Reading spreadsheet data";
-	            step = steps.DOWNLOAD_DATA;
-	            _context.prev = 49;
-	            _context.next = 52;
+	            _context.prev = 57;
+	            _context.next = 60;
 	            return api.getSpreadsheetValues(id, sheet);
 
-	          case 52:
+	          case 60:
 	            data = _context.sent;
-	            _context.next = 59;
+	            _context.next = 67;
 	            break;
 
-	          case 55:
-	            _context.prev = 55;
-	            _context.t3 = _context["catch"](49);
-	            steps.show_help(step, _context.t3);
+	          case 63:
+	            _context.prev = 63;
+	            _context.t4 = _context["catch"](57);
+	            showIssue(STEP_DOWNLOAD_DATA, _context.t4);
 	            return _context.abrupt("return");
 
-	          case 59:
+	          case 67:
 	            load_part1_bar.style.width = 90 + "%"; // Validating
 
 	            load_part1_desc.textContent = "Checking consistency";
-	            step = steps.ORGANIZE_FIELDS_DATA;
+	            _context.prev = 69;
 	            fields = organize_fields(fields);
 
 	            if (!fields.isMalformed) {
-	              _context.next = 66;
+	              _context.next = 74;
 	              break;
 	            }
 
-	            steps.show_help(step);
+	            showLoadingKnownIssue(ISSUE_BAD_FIELDS_SHEET);
 	            return _context.abrupt("return");
 
-	          case 66:
-	            step = steps.MATCH_HEADER_TO_FIELDS;
+	          case 74:
+	            _context.next = 80;
+	            break;
+
+	          case 76:
+	            _context.prev = 76;
+	            _context.t5 = _context["catch"](69);
+	            showIssue(STEP_ORGANIZE_FIELDS, _context.t5);
+	            return _context.abrupt("return");
+
+	          case 80:
+	            _context.prev = 80;
 	            fields = match_header_to_fields(fields, data[0]);
 
 	            if (fields) {
-	              _context.next = 71;
+	              _context.next = 85;
 	              break;
 	            }
 
-	            steps.show_help(step);
+	            showLoadingKnownIssue(ISSUE_FIELDS_SHEET_SYNC);
 	            return _context.abrupt("return");
 
-	          case 71:
+	          case 85:
+	            _context.next = 91;
+	            break;
+
+	          case 87:
+	            _context.prev = 87;
+	            _context.t6 = _context["catch"](80);
+	            showIssue(STEP_MATCH_FIELDS, _context.t6);
+	            return _context.abrupt("return");
+
+	          case 91:
 	            load_part1_bar.style.width = 100 + "%"; // Part 2 --------------------------------------
 
-	            step = steps.CHOOSE_VISUALIZATIONS;
-	            _context.prev = 73;
-	            _context.next = 76;
+	            _context.prev = 92;
+	            _context.next = 95;
 	            return load_designs(fields, {
 	              bar: load_part2_bar,
 	              desc: load_part2_desc
 	            });
 
-	          case 76:
+	          case 95:
 	            designs = _context.sent;
-	            _context.next = 83;
+	            _context.next = 102;
 	            break;
 
-	          case 79:
-	            _context.prev = 79;
-	            _context.t4 = _context["catch"](73);
-	            steps.show_help(step, _context.t4);
+	          case 98:
+	            _context.prev = 98;
+	            _context.t7 = _context["catch"](92);
+	            showLoadingIssue(STEP_CHOOSE_VISUALIZATIONS, _context.t7);
 	            return _context.abrupt("return");
 
-	          case 83:
+	          case 102:
 	            // Part 3 --------------------------------------
-	            step = steps.RENDER_VISUALIZATIONS;
 	            render_config = {
 	              root: report,
 	              id: id,
@@ -3806,32 +4123,32 @@
 	              visualizations: designs,
 	              data: data
 	            };
-	            _context.prev = 85;
-	            _context.next = 88;
+	            _context.prev = 103;
+	            _context.next = 106;
 	            return render_visualizations(render_config, {
 	              bar: load_part3_bar,
 	              desc: load_part3_desc
 	            });
 
-	          case 88:
-	            _context.next = 94;
+	          case 106:
+	            _context.next = 112;
 	            break;
 
-	          case 90:
-	            _context.prev = 90;
-	            _context.t5 = _context["catch"](85);
-	            steps.show_help(step, _context.t5);
+	          case 108:
+	            _context.prev = 108;
+	            _context.t8 = _context["catch"](103);
+	            showLoadingIssue(STEP_MAKE_VISUALIZATIONS, _context.t8);
 	            return _context.abrupt("return");
 
-	          case 94:
+	          case 112:
 	            finish(id, sheet);
 
-	          case 95:
+	          case 113:
 	          case "end":
 	            return _context.stop();
 	        }
 	      }
-	    }, _callee, null, [[3, 9], [15, 21], [36, 42], [49, 55], [73, 79], [85, 90]]);
+	    }, _callee, null, [[3, 9], [14, 20], [33, 40], [45, 51], [57, 63], [69, 76], [80, 87], [92, 98], [103, 108]]);
 	  }));
 	  return _process.apply(this, arguments);
 	}

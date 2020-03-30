@@ -18,8 +18,12 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
     src: url($baseurl + "/assets/fonts/CerebriSansPro-Regular.woff2") format("woff2");
 }
 
-.issue-step {
-  width: 70%;
+.italic {
+  font-style: italic;
+}
+
+.semi-bold {
+  font-weight: 400;
 }
 
 .message-text {
@@ -48,6 +52,65 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
 .help-paragraph {
   margin-top: 0;
   margin-bottom: 0;
+}
+
+.loading-issue {
+  width: 90%;
+  max-width: 540px;
+  margin-top: 4rem;
+  margin-left: auto;
+  margin-right: auto;
+  background: #f2f8fa;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+
+.issue-help-container {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 1.5;
+  letter-spacing: 1px;
+  color: #000000;
+}
+
+.issue-help {
+}
+
+.issue-contact {
+  margin-top: 1.5rem;
+}
+
+.issue-contact a {
+  color: inherit;
+}
+
+.bug-report {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 1.5;
+  letter-spacing: 1px;
+  color: #000000;
+}
+
+.bug-help {
+  margin-bottom: 1.5rem;
+}
+
+.bug-details {
+  background: #ffffff;
+  line-height: 1.2rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+
+.bug-help a {
+  color: inherit;
 }
 
 .new-container {
@@ -199,7 +262,6 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   letter-spacing: 1px;
   color: #999999;
   text-decoration: none;
-
 }
 
 .spreadsheet-example-view img {

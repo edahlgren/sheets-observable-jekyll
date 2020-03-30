@@ -1,5 +1,16 @@
 import loadScript from './loadScript.js';
-import errors from './errors.js';
+import {
+  ERROR_GOOGLE_RESOURCE_DOESNT_EXIST,
+  ERROR_GOOGLE_SERVER_ISSUE,
+  ERROR_GOOGLE_CLIENT_INIT,
+  ERROR_GOOGLE_CLIENT_MISCONFIGURED,
+  ERROR_SPREADSHEET_UNAUTHORIZED,
+  ERROR_NO_SPREADSHEET,
+  ERROR_SPREADSHEET_API_GET,
+  ERROR_SPREADSHEET_VALUES_API_GET,
+  ERROR_BAD_SPREADSHEET_RANGE,
+  makeKnownError
+} from "./errors.js";
 
 // Google constants
 const clientId = '610692011464-m1oi9ddi7u31h92e09lg5s970luvak9a.apps.googleusercontent.com',
@@ -16,19 +27,22 @@ function load_script() {
     loadScript(
       "https://apis.google.com/js/api.js"
     ).then(resolve).catch(function(error) {
-      console.log("[error: load script]", error);
-      reject(errors.SCRIPT_DOWNLOAD_ERROR);
+      error = makeKnownError(ERROR_GOOGLE_RESOURCE_DOESNT_EXIST, error);
+      reject(error);
     });
   });
 }
 
 function load_client() {
   return new Promise(function(resolve, reject) {
+    if (!gapi) {
+    }
+
     gapi.load('client:auth2', {
       callback: resolve,
       onerror: function(error) {
-        console.log("[error: load auth2 client]", error);
-        reject(errors.GOOGLE_CLIENT_LOAD_ERROR);
+        error = makeKnownError(ERROR_GOOGLE_RESOURCE_DOESNT_EXIST, error);
+        reject(error);
       }
     });
   });
@@ -36,15 +50,35 @@ function load_client() {
 
 function init_client() {
   return new Promise(function(resolve, reject) {
-    gapi.client.init({
+    if (!gapi) {
+    }
+    if (!gapi.client) {
+    }
+
+    var config = {
       clientId: clientId,
       apiKey: apiKey,
       discoveryDocs: discoveryDocs,
       scope: scopes.join(' ')
-    }).then(resolve).catch(function(error) {
-      console.log("[error: init client]", error);
-      reject(errors.GOOGLE_CLIENT_INIT_ERROR);
-    });
+    };
+    try {
+      gapi.client.init(config).then(function() {
+        if (!gapi.auth2 || !gapi.auth2.getAuthInstance()) {
+          throw new Error("config: " + JSON.stringify(config, null, 2));
+        }
+        resolve();
+      }).catch(function(error) {
+        if (!gapi.auth2 || !gapi.auth2.getAuthInstance()) {
+          error = makeKnownError(ERROR_GOOGLE_CLIENT_MISCONFIGURED, error);
+        } else {
+          error = makeKnownError(ERROR_GOOGLE_CLIENT_INIT, error);
+        }
+        reject(error);
+      });
+    } catch (error) {
+      error = makeKnownError(ERROR_GOOGLE_CLIENT_INIT, error);
+      reject(error);
+    }
   });
 }
 
@@ -140,21 +174,96 @@ var api = {
   },
   getSpreadsheetMetadata: function(id) {
     return new Promise(function(resolve, reject) {
-      gapi.client.sheets.spreadsheets.get({
+      if (!gapi) {
+      }
+      if (!gapi.client) {
+      }
+      if (!gapi.client.sheets) {
+      }
+
+      var config = {
         spreadsheetId: id
-      }).then(function(response) {
-        resolve(response.result);
-      }).catch(reject);
+      };
+      try {
+        gapi.client.sheets.spreadsheets.get(config)
+        .then(function(response) {
+          resolve(response.result);
+        }).catch(function(response) {
+          var error_msg = response.result.error.message,
+              error = new Error(error_msg + " config: " + JSON.stringify(config, null, 2));
+
+          switch (response.result.error.status) {
+          case "NOT_FOUND":
+            error = makeKnownError(ERROR_NO_SPREADSHEET, error);
+            break;
+          default:
+            if (response.result.error.code >= 500) {
+              error = makeKnownError(ERROR_GOOGLE_SERVER_ISSUE, error);
+            } else {
+              error = makeKnownError(ERROR_SPREADSHEET_VALUES_API_GET, error);
+            }
+            break;
+          }
+          reject(error);
+        });
+      } catch (error) {
+        error = makeKnownError(ERROR_SPREADSHEET_VALUES_API_GET, error);
+        reject(error);
+      }
     });
   },
   getSpreadsheetValues: function(id, range) {
     return new Promise(function(resolve, reject) {
-      gapi.client.sheets.spreadsheets.values.get({
+      if (!gapi) {
+      }
+      if (!gapi.client) {
+      }
+      if (!gapi.client.sheets) {
+      }
+
+      var config = {
         spreadsheetId: id,
         range: range
-      }).then(function(response) {
-        resolve(response.result.values);
-      }).catch(reject);
+      };
+      try {
+        gapi.client.sheets.spreadsheets.values.get(config)
+        .then(function(response) {
+          resolve(response.result.values);
+        }).catch(function(response) {
+          // Handle weird case when range is messed up
+          if (response.result == false) {
+            var error = new Error("config: " + JSON.stringify(config, null, 2));
+            if (response.status == 404) {
+              error = makeKnownError(ERROR_BAD_SPREADSHEET_RANGE, error);
+            } else {
+              error = makeKnownError(ERROR_SPREADSHEET_VALUES_API_GET, error);
+            }
+            reject(error);
+            return;
+          }
+
+          // Handle the common case
+          var error_msg = response.result.error.message,
+              error = new Error(error_msg + " config: " + JSON.stringify(config, null, 2));
+
+          switch (response.result.error.status) {
+          case "NOT_FOUND":
+            error = makeKnownError(ERROR_NO_SPREADSHEET, error);
+            break;
+          default:
+            if (response.result.error.code >= 500) {
+              error = makeKnownError(ERROR_GOOGLE_SERVER_ISSUE, error);
+            } else {
+              error = makeKnownError(ERROR_SPREADSHEET_VALUES_API_GET, error);
+            }
+            break;
+          }
+          reject(error);
+        });
+      } catch (error) {
+        error = makeKnownError(ERROR_SPREADSHEET_VALUES_API_GET, error);
+        reject(error);
+      }
     });
   }
 };
@@ -167,25 +276,16 @@ function get_api(auth_config, loader) {
       return resolve(api);
     }
     initialize(loader).then(function(timing) {
+      if (!gapi) {
+      }
+      if (!gapi.auth2) {
+      }
+      if (!gapi.auth2.getAuthInstance()) {
+      }
+
       setup_auth(auth_config);
       initialized = true;
       resolve(api);
-    }).catch(reject);
-  });
-}
-
-function get_data(auth, id, sheet) {
-  return new Promise(function(resolve, reject) {
-    get_api(auth).then(function(api) {
-      api.getSpreadsheetValues(id, sheet).then(resolve).catch(reject);
-    }).catch(reject);
-  });
-}
-
-function access_spreadsheet(auth, id) {
-  return new Promise(function(resolve, reject) {
-    get_api(auth).then(function(api) {
-      api.getSpreadsheetMetadata(id).then(resolve).catch(reject);
     }).catch(reject);
   });
 }
@@ -197,5 +297,3 @@ export { spreadsheet_url as makeSpreadsheetUrl };
 
 // Using the Google Sheets API
 export { get_api as getGoogleApi };
-export { get_data as getData };
-export { access_spreadsheet as accessSpreadsheet };

@@ -1599,6 +1599,384 @@
 	  }
 	});
 
+	// 7.2.8 IsRegExp(argument)
+
+
+	var MATCH = _wks('match');
+	var _isRegexp = function (it) {
+	  var isRegExp;
+	  return _isObject(it) && ((isRegExp = it[MATCH]) !== undefined ? !!isRegExp : _cof(it) == 'RegExp');
+	};
+
+	var at = _stringAt(true);
+
+	 // `AdvanceStringIndex` abstract operation
+	// https://tc39.github.io/ecma262/#sec-advancestringindex
+	var _advanceStringIndex = function (S, index, unicode) {
+	  return index + (unicode ? at(S, index).length : 1);
+	};
+
+	var builtinExec = RegExp.prototype.exec;
+
+	 // `RegExpExec` abstract operation
+	// https://tc39.github.io/ecma262/#sec-regexpexec
+	var _regexpExecAbstract = function (R, S) {
+	  var exec = R.exec;
+	  if (typeof exec === 'function') {
+	    var result = exec.call(R, S);
+	    if (typeof result !== 'object') {
+	      throw new TypeError('RegExp exec method returned something other than an Object or null');
+	    }
+	    return result;
+	  }
+	  if (_classof(R) !== 'RegExp') {
+	    throw new TypeError('RegExp#exec called on incompatible receiver');
+	  }
+	  return builtinExec.call(R, S);
+	};
+
+	// 21.2.5.3 get RegExp.prototype.flags
+
+	var _flags = function () {
+	  var that = _anObject(this);
+	  var result = '';
+	  if (that.global) result += 'g';
+	  if (that.ignoreCase) result += 'i';
+	  if (that.multiline) result += 'm';
+	  if (that.unicode) result += 'u';
+	  if (that.sticky) result += 'y';
+	  return result;
+	};
+
+	var nativeExec = RegExp.prototype.exec;
+	// This always refers to the native implementation, because the
+	// String#replace polyfill uses ./fix-regexp-well-known-symbol-logic.js,
+	// which loads this file before patching the method.
+	var nativeReplace = String.prototype.replace;
+
+	var patchedExec = nativeExec;
+
+	var LAST_INDEX = 'lastIndex';
+
+	var UPDATES_LAST_INDEX_WRONG = (function () {
+	  var re1 = /a/,
+	      re2 = /b*/g;
+	  nativeExec.call(re1, 'a');
+	  nativeExec.call(re2, 'a');
+	  return re1[LAST_INDEX] !== 0 || re2[LAST_INDEX] !== 0;
+	})();
+
+	// nonparticipating capturing group, copied from es5-shim's String#split patch.
+	var NPCG_INCLUDED = /()??/.exec('')[1] !== undefined;
+
+	var PATCH = UPDATES_LAST_INDEX_WRONG || NPCG_INCLUDED;
+
+	if (PATCH) {
+	  patchedExec = function exec(str) {
+	    var re = this;
+	    var lastIndex, reCopy, match, i;
+
+	    if (NPCG_INCLUDED) {
+	      reCopy = new RegExp('^' + re.source + '$(?!\\s)', _flags.call(re));
+	    }
+	    if (UPDATES_LAST_INDEX_WRONG) lastIndex = re[LAST_INDEX];
+
+	    match = nativeExec.call(re, str);
+
+	    if (UPDATES_LAST_INDEX_WRONG && match) {
+	      re[LAST_INDEX] = re.global ? match.index + match[0].length : lastIndex;
+	    }
+	    if (NPCG_INCLUDED && match && match.length > 1) {
+	      // Fix browsers whose `exec` methods don't consistently return `undefined`
+	      // for NPCG, like IE8. NOTE: This doesn' work for /(.?)?/
+	      // eslint-disable-next-line no-loop-func
+	      nativeReplace.call(match[0], reCopy, function () {
+	        for (i = 1; i < arguments.length - 2; i++) {
+	          if (arguments[i] === undefined) match[i] = undefined;
+	        }
+	      });
+	    }
+
+	    return match;
+	  };
+	}
+
+	var _regexpExec = patchedExec;
+
+	_export({
+	  target: 'RegExp',
+	  proto: true,
+	  forced: _regexpExec !== /./.exec
+	}, {
+	  exec: _regexpExec
+	});
+
+	var SPECIES$2 = _wks('species');
+
+	var REPLACE_SUPPORTS_NAMED_GROUPS = !_fails(function () {
+	  // #replace needs built-in support for named groups.
+	  // #match works fine because it just return the exec results, even if it has
+	  // a "grops" property.
+	  var re = /./;
+	  re.exec = function () {
+	    var result = [];
+	    result.groups = { a: '7' };
+	    return result;
+	  };
+	  return ''.replace(re, '$<a>') !== '7';
+	});
+
+	var SPLIT_WORKS_WITH_OVERWRITTEN_EXEC = (function () {
+	  // Chrome 51 has a buggy "split" implementation when RegExp#exec !== nativeExec
+	  var re = /(?:)/;
+	  var originalExec = re.exec;
+	  re.exec = function () { return originalExec.apply(this, arguments); };
+	  var result = 'ab'.split(re);
+	  return result.length === 2 && result[0] === 'a' && result[1] === 'b';
+	})();
+
+	var _fixReWks = function (KEY, length, exec) {
+	  var SYMBOL = _wks(KEY);
+
+	  var DELEGATES_TO_SYMBOL = !_fails(function () {
+	    // String methods call symbol-named RegEp methods
+	    var O = {};
+	    O[SYMBOL] = function () { return 7; };
+	    return ''[KEY](O) != 7;
+	  });
+
+	  var DELEGATES_TO_EXEC = DELEGATES_TO_SYMBOL ? !_fails(function () {
+	    // Symbol-named RegExp methods call .exec
+	    var execCalled = false;
+	    var re = /a/;
+	    re.exec = function () { execCalled = true; return null; };
+	    if (KEY === 'split') {
+	      // RegExp[@@split] doesn't call the regex's exec method, but first creates
+	      // a new one. We need to return the patched regex when creating the new one.
+	      re.constructor = {};
+	      re.constructor[SPECIES$2] = function () { return re; };
+	    }
+	    re[SYMBOL]('');
+	    return !execCalled;
+	  }) : undefined;
+
+	  if (
+	    !DELEGATES_TO_SYMBOL ||
+	    !DELEGATES_TO_EXEC ||
+	    (KEY === 'replace' && !REPLACE_SUPPORTS_NAMED_GROUPS) ||
+	    (KEY === 'split' && !SPLIT_WORKS_WITH_OVERWRITTEN_EXEC)
+	  ) {
+	    var nativeRegExpMethod = /./[SYMBOL];
+	    var fns = exec(
+	      _defined,
+	      SYMBOL,
+	      ''[KEY],
+	      function maybeCallNative(nativeMethod, regexp, str, arg2, forceStringMethod) {
+	        if (regexp.exec === _regexpExec) {
+	          if (DELEGATES_TO_SYMBOL && !forceStringMethod) {
+	            // The native String method already delegates to @@method (this
+	            // polyfilled function), leasing to infinite recursion.
+	            // We avoid it by directly calling the native @@method method.
+	            return { done: true, value: nativeRegExpMethod.call(regexp, str, arg2) };
+	          }
+	          return { done: true, value: nativeMethod.call(str, regexp, arg2) };
+	        }
+	        return { done: false };
+	      }
+	    );
+	    var strfn = fns[0];
+	    var rxfn = fns[1];
+
+	    _redefine(String.prototype, KEY, strfn);
+	    _hide(RegExp.prototype, SYMBOL, length == 2
+	      // 21.2.5.8 RegExp.prototype[@@replace](string, replaceValue)
+	      // 21.2.5.11 RegExp.prototype[@@split](string, limit)
+	      ? function (string, arg) { return rxfn.call(string, this, arg); }
+	      // 21.2.5.6 RegExp.prototype[@@match](string)
+	      // 21.2.5.9 RegExp.prototype[@@search](string)
+	      : function (string) { return rxfn.call(string, this); }
+	    );
+	  }
+	};
+
+	var $min = Math.min;
+	var $push = [].push;
+	var $SPLIT = 'split';
+	var LENGTH = 'length';
+	var LAST_INDEX$1 = 'lastIndex';
+	var MAX_UINT32 = 0xffffffff;
+
+	// babel-minify transpiles RegExp('x', 'y') -> /x/y and it causes SyntaxError
+	var SUPPORTS_Y = !_fails(function () { RegExp(MAX_UINT32, 'y'); });
+
+	// @@split logic
+	_fixReWks('split', 2, function (defined, SPLIT, $split, maybeCallNative) {
+	  var internalSplit;
+	  if (
+	    'abbc'[$SPLIT](/(b)*/)[1] == 'c' ||
+	    'test'[$SPLIT](/(?:)/, -1)[LENGTH] != 4 ||
+	    'ab'[$SPLIT](/(?:ab)*/)[LENGTH] != 2 ||
+	    '.'[$SPLIT](/(.?)(.?)/)[LENGTH] != 4 ||
+	    '.'[$SPLIT](/()()/)[LENGTH] > 1 ||
+	    ''[$SPLIT](/.?/)[LENGTH]
+	  ) {
+	    // based on es5-shim implementation, need to rework it
+	    internalSplit = function (separator, limit) {
+	      var string = String(this);
+	      if (separator === undefined && limit === 0) return [];
+	      // If `separator` is not a regex, use native split
+	      if (!_isRegexp(separator)) return $split.call(string, separator, limit);
+	      var output = [];
+	      var flags = (separator.ignoreCase ? 'i' : '') +
+	                  (separator.multiline ? 'm' : '') +
+	                  (separator.unicode ? 'u' : '') +
+	                  (separator.sticky ? 'y' : '');
+	      var lastLastIndex = 0;
+	      var splitLimit = limit === undefined ? MAX_UINT32 : limit >>> 0;
+	      // Make `global` and avoid `lastIndex` issues by working with a copy
+	      var separatorCopy = new RegExp(separator.source, flags + 'g');
+	      var match, lastIndex, lastLength;
+	      while (match = _regexpExec.call(separatorCopy, string)) {
+	        lastIndex = separatorCopy[LAST_INDEX$1];
+	        if (lastIndex > lastLastIndex) {
+	          output.push(string.slice(lastLastIndex, match.index));
+	          if (match[LENGTH] > 1 && match.index < string[LENGTH]) $push.apply(output, match.slice(1));
+	          lastLength = match[0][LENGTH];
+	          lastLastIndex = lastIndex;
+	          if (output[LENGTH] >= splitLimit) break;
+	        }
+	        if (separatorCopy[LAST_INDEX$1] === match.index) separatorCopy[LAST_INDEX$1]++; // Avoid an infinite loop
+	      }
+	      if (lastLastIndex === string[LENGTH]) {
+	        if (lastLength || !separatorCopy.test('')) output.push('');
+	      } else output.push(string.slice(lastLastIndex));
+	      return output[LENGTH] > splitLimit ? output.slice(0, splitLimit) : output;
+	    };
+	  // Chakra, V8
+	  } else if ('0'[$SPLIT](undefined, 0)[LENGTH]) {
+	    internalSplit = function (separator, limit) {
+	      return separator === undefined && limit === 0 ? [] : $split.call(this, separator, limit);
+	    };
+	  } else {
+	    internalSplit = $split;
+	  }
+
+	  return [
+	    // `String.prototype.split` method
+	    // https://tc39.github.io/ecma262/#sec-string.prototype.split
+	    function split(separator, limit) {
+	      var O = defined(this);
+	      var splitter = separator == undefined ? undefined : separator[SPLIT];
+	      return splitter !== undefined
+	        ? splitter.call(separator, O, limit)
+	        : internalSplit.call(String(O), separator, limit);
+	    },
+	    // `RegExp.prototype[@@split]` method
+	    // https://tc39.github.io/ecma262/#sec-regexp.prototype-@@split
+	    //
+	    // NOTE: This cannot be properly polyfilled in engines that don't support
+	    // the 'y' flag.
+	    function (regexp, limit) {
+	      var res = maybeCallNative(internalSplit, regexp, this, limit, internalSplit !== $split);
+	      if (res.done) return res.value;
+
+	      var rx = _anObject(regexp);
+	      var S = String(this);
+	      var C = _speciesConstructor(rx, RegExp);
+
+	      var unicodeMatching = rx.unicode;
+	      var flags = (rx.ignoreCase ? 'i' : '') +
+	                  (rx.multiline ? 'm' : '') +
+	                  (rx.unicode ? 'u' : '') +
+	                  (SUPPORTS_Y ? 'y' : 'g');
+
+	      // ^(? + rx + ) is needed, in combination with some S slicing, to
+	      // simulate the 'y' flag.
+	      var splitter = new C(SUPPORTS_Y ? rx : '^(?:' + rx.source + ')', flags);
+	      var lim = limit === undefined ? MAX_UINT32 : limit >>> 0;
+	      if (lim === 0) return [];
+	      if (S.length === 0) return _regexpExecAbstract(splitter, S) === null ? [S] : [];
+	      var p = 0;
+	      var q = 0;
+	      var A = [];
+	      while (q < S.length) {
+	        splitter.lastIndex = SUPPORTS_Y ? q : 0;
+	        var z = _regexpExecAbstract(splitter, SUPPORTS_Y ? S : S.slice(q));
+	        var e;
+	        if (
+	          z === null ||
+	          (e = $min(_toLength(splitter.lastIndex + (SUPPORTS_Y ? 0 : q)), S.length)) === p
+	        ) {
+	          q = _advanceStringIndex(S, q, unicodeMatching);
+	        } else {
+	          A.push(S.slice(p, q));
+	          if (A.length === lim) return A;
+	          for (var i = 1; i <= z.length - 1; i++) {
+	            A.push(z[i]);
+	            if (A.length === lim) return A;
+	          }
+	          q = p = e;
+	        }
+	      }
+	      A.push(S.slice(p));
+	      return A;
+	    }
+	  ];
+	});
+
+	// helper for String#{startsWith, endsWith, includes}
+
+
+
+	var _stringContext = function (that, searchString, NAME) {
+	  if (_isRegexp(searchString)) throw TypeError('String#' + NAME + " doesn't accept regex!");
+	  return String(_defined(that));
+	};
+
+	var MATCH$1 = _wks('match');
+	var _failsIsRegexp = function (KEY) {
+	  var re = /./;
+	  try {
+	    '/./'[KEY](re);
+	  } catch (e) {
+	    try {
+	      re[MATCH$1] = false;
+	      return !'/./'[KEY](re);
+	    } catch (f) { /* empty */ }
+	  } return true;
+	};
+
+	var STARTS_WITH = 'startsWith';
+	var $startsWith = ''[STARTS_WITH];
+
+	_export(_export.P + _export.F * _failsIsRegexp(STARTS_WITH), 'String', {
+	  startsWith: function startsWith(searchString /* , position = 0 */) {
+	    var that = _stringContext(this, searchString, STARTS_WITH);
+	    var index = _toLength(Math.min(arguments.length > 1 ? arguments[1] : undefined, that.length));
+	    var search = String(searchString);
+	    return $startsWith
+	      ? $startsWith.call(that, search, index)
+	      : that.slice(index, index + search.length) === search;
+	  }
+	});
+
+	var dP$2 = _objectDp.f;
+	var FProto = Function.prototype;
+	var nameRE = /^\s*function ([^ (]*)/;
+	var NAME$1 = 'name';
+
+	// 19.2.4.2 name
+	NAME$1 in FProto || _descriptors && dP$2(FProto, NAME$1, {
+	  configurable: true,
+	  get: function () {
+	    try {
+	      return ('' + this).match(nameRE)[1];
+	    } catch (e) {
+	      return '';
+	    }
+	  }
+	});
+
 	var url_header = 'https://docs.google.com/spreadsheets/d/';
 
 	function spreadsheet_id(url) {

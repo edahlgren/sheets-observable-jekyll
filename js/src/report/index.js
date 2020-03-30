@@ -1,8 +1,15 @@
 // Imports ------------------------------------
 
 import { makeSpreadsheetUrl, getGoogleApi } from "../google.js";
-import errors from "../errors.js";
-import steps from "./steps.js";
+import {
+  ISSUE_SPREADSHEET_ACCESS,
+  ISSUE_NO_FIELDS_SHEET,
+  ISSUE_BAD_FIELDS_SHEET,
+  ISSUE_FIELDS_SHEET_SYNC,
+  isAuthIssue,
+  showLoadingKnownIssue,
+  showLoadingBug
+} from "../errors.js";
 import {
   choose_single_sheet,
   organize_fields,
@@ -12,10 +19,6 @@ import {
 } from "./processing.js";
 
 // DOM ----------------------------------------
-
-// Top submit new spreadsheet bar
-var spreadsheet_submit = document.getElementById("submit-spreadsheet"),
-    spreadsheet_input = document.getElementById("spreadsheet-url");
 
 // Loading report
 var processing = document.getElementById("report-processing");
@@ -43,12 +46,52 @@ var report = document.getElementById("report");
 var request_channel = null,
     response_channels = new Map();
 
+// Define the processing steps ---------------
+
+const STEP_BEFORE_AUTH = 0,
+      STEP_AFTER_AUTH = 1,
+      STEP_GET_METADATA = 2,
+      STEP_CHOOSE_SHEET = 3,
+      STEP_DOWNLOAD_FIELDS = 4,
+      STEP_DOWNLOAD_DATA = 5,
+      STEP_ORGANIZE_FIELDS = 6,
+      STEP_MATCH_FIELDS = 7,
+      STEP_CHOOSE_VISUALIZATIONS = 8,
+      STEP_MAKE_VISUALIZATIONS = 9;
+
+function stepToString(step) {
+  switch (step) {
+  case STEP_BEFORE_AUTH:
+    return "Before authorization";
+  case STEP_AFTER_AUTH:
+    return "After authorization";
+  case STEP_GET_METADATA:
+    return "Getting spreadsheet metadata";
+  case STEP_CHOOSE_SHEET:
+    return "Choosing sheet";
+  case STEP_DOWNLOAD_FIELDS:
+    return "Downloading fields";
+  case STEP_DOWNLOAD_DATA:
+    return "Downloading data";
+  case STEP_ORGANIZE_FIELDS:
+    return "Organizing fields";
+  case STEP_MATCH_FIELDS:
+    return "Matching header to fields";
+  case STEP_CHOOSE_VISUALIZATIONS:
+    return "Choosing visualizations";
+  case STEP_MAKE_VISUALIZATIONS:
+    return "Making visualizations";
+  default:
+    return "unknown";
+  }
+}
+
 // Execute ------------------------------------
 
 // TODO: Cancel and re-process on submitting new URL
 var spreadsheetId = refresh_id();
 if (spreadsheetId) {
-  process(spreadsheetId, steps.ACCESS_SPREADSHEET_BEFORE_AUTH);
+  process(spreadsheetId, STEP_BEFORE_AUTH);
 }
 
 // Initialize top bar ------------------------
@@ -73,18 +116,19 @@ function refresh_id() {
   return id;
 }
 
-// Define the processing steps ---------------
+// Actally do processing steps ---------------
 
-function make_auth(on_signin) {
-  return {
-    signin: [{
-      element: signin_button,
-      afterAuth: on_signin
-    }]
-  };
+function showIssue(step, error) {
+  if (!showLoadingKnownIssue(null, error)) {
+    showLoadingBug(stepToString(step), error);
+  }
 }
 
-async function process(id, step) {
+function showBug(step, error) {
+  showLoadingBug(stepToString(step), error);
+}
+
+async function process(id, firstStep) {
   console.log("processing [" + id + "]");
 
   var api = null,
@@ -95,12 +139,22 @@ async function process(id, step) {
       data = null;
 
   // Make auth config (signin / signout buttons)
-  var auth = make_auth({
-    afterAuth: function() {
-      authorize_message.classList.add("hidden");
-      process(id, steps.ACCESS_SPREADSHEET_AFTER_AUTH);
-    }
-  });
+  var auth = {
+    signin: [{
+      element: signin_button,
+      afterAuth: function() {
+        authorize_message.classList.add("hidden");
+        process(id, STEP_AFTER_AUTH);
+      }
+    }]
+  };
+
+  // TODO: Test no gapi, gapi.client, gapi.auth2
+  // TODO: Test choose_single_sheet
+  // TODO: Test organize_fields
+  // TODO: Test match_header_to_fields
+  // TODO: Test load_designs
+  // TODO: Test render_visualizations
 
   // Part 1 --------------------------------------
 
@@ -111,8 +165,7 @@ async function process(id, step) {
       desc: load_part1_desc
     });
   } catch (error) {
-    console.log("[error: get google api]", error);
-    steps.show_help(step, error);
+    showIssue(firstStep, error);
     return;
   }
 
@@ -121,76 +174,92 @@ async function process(id, step) {
   try {
     metadata = await api.getSpreadsheetMetadata(id);
   } catch (error) {
-    console.log("[error: access spreadsheet]", error);
-    steps.show_help(step, error);
+    if (isAuthIssue(error)) {
+      if (firstStep == STEP_BEFORE_AUTH) {
+        authorize_message.classList.remove("hidden");
+        return;
+      }
+      if (firstStep == STEP_AFTER_AUTH) {
+        showLoadingKnownIssue(ISSUE_SPREADSHEET_ACCESS);
+        return;
+      }
+    }
+    showIssue(STEP_GET_METADATA, error);
     return;
   }
   load_part1_bar.style.width = 45 + "%";
 
   // Choosing sheet
   load_part1_desc.textContent = "Choosing sheet";
-  step = steps.CHOOSE_SPREADSHEET;
-  sheet = choose_single_sheet(metadata.sheets);
-  if (!sheet) {
-    steps.show_help(step);
-    return;
+  try {
+    sheet = choose_single_sheet(metadata.sheets);
+    if (!sheet) {
+      showLoadingKnownIssue(ISSUE_NO_FIELDS_SHEET);
+      return;
+    }
+  } catch (error) {
+    showBug(STEP_CHOOSE_SHEET, error);
   }
   load_part1_bar.style.width = 50 + "%";
 
   // Reading fields
   load_part1_desc.textContent = "Reading spreadsheet fields";
-  step = steps.READ_FIELDS_DATA;
   try {
     fields = await api.getSpreadsheetValues(id, sheet + ".fields");
   } catch (error) {
-    steps.show_help(step, error);
+    showIssue(STEP_DOWNLOAD_FIELDS, error);
     return;
   }
   load_part1_bar.style.width = 70 + "%";
 
   // Reading data
   load_part1_desc.textContent = "Reading spreadsheet data";
-  step = steps.DOWNLOAD_DATA;
   try {
     data = await api.getSpreadsheetValues(id, sheet);
   } catch (error) {
-    steps.show_help(step, error);
+    showIssue(STEP_DOWNLOAD_DATA, error);
     return;
   }
   load_part1_bar.style.width = 90 + "%";
 
   // Validating
   load_part1_desc.textContent = "Checking consistency";
-  step = steps.ORGANIZE_FIELDS_DATA;
-  fields = organize_fields(fields);
-  if (fields.isMalformed) {
-    steps.show_help(step);
+  try {
+    fields = organize_fields(fields);
+    if (fields.isMalformed) {
+      showLoadingKnownIssue(ISSUE_BAD_FIELDS_SHEET);
+      return;
+    }
+  } catch (error) {
+    showIssue(STEP_ORGANIZE_FIELDS, error);
     return;
   }
-  step = steps.MATCH_HEADER_TO_FIELDS;
-  fields = match_header_to_fields(fields, data[0]);
-  if (!fields) {
-    steps.show_help(step);
+  try {
+    fields = match_header_to_fields(fields, data[0]);
+    if (!fields) {
+      showLoadingKnownIssue(ISSUE_FIELDS_SHEET_SYNC);
+      return;
+    }
+  } catch (error) {
+    showIssue(STEP_MATCH_FIELDS, error);
     return;
   }
   load_part1_bar.style.width = 100 + "%";
 
   // Part 2 --------------------------------------
 
-  step = steps.CHOOSE_VISUALIZATIONS;
   try {
     designs = await load_designs(fields, {
       bar: load_part2_bar,
       desc: load_part2_desc
     });
   } catch (error) {
-    steps.show_help(step, error);
+    showLoadingIssue(STEP_CHOOSE_VISUALIZATIONS, error);
     return;
   }
 
   // Part 3 --------------------------------------
 
-  step = steps.RENDER_VISUALIZATIONS;
   var render_config = {
     root: report,
     id: id,
@@ -207,7 +276,7 @@ async function process(id, step) {
       desc: load_part3_desc
     });
   } catch (error) {
-    steps.show_help(step, error);
+    showLoadingIssue(STEP_MAKE_VISUALIZATIONS, error);
     return;
   }
 
