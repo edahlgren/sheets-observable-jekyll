@@ -333,7 +333,7 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   color: #505961;
 }
 
-.report-processing {
+.processing {
   margin-top: 8rem;
   margin-bottom: 12rem;
 }
@@ -525,12 +525,6 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   margin-bottom: 24rem;
 }
 
-.plot-processing {
-  margin-top: 8rem;
-  display: flex;
-  justify-content: center;
-}
-
 .plot-loader {
   width: 100%;
   max-width: 400px;
@@ -602,10 +596,6 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.plot-back-button {
-  margin-left: 0;
 }
 
 .plot-spreadsheet-header {

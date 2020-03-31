@@ -1,3 +1,10 @@
+import {
+  ERROR_APP_RESOURCE_DOESNT_EXIST,
+  ERROR_WITH_PLOT_URL,
+  ERROR_PLOT_URL_DOESNT_MATCH_DATA,
+  makeKnownError
+} from "./errors.js";
+
 function iteration_data_xy(i, fields, data) {
   var x = fields.get(i.x),
       y = fields.get(i.y);
@@ -37,10 +44,12 @@ function parse_vars_xy(query_vars, header) {
       y_desc = query_vars.get("ylabel");
 
   if (!x || !x_desc) {
-    throw new Error("Need query string variables 'x' and 'xlabel'");
+    var error = new Error("Need query string variables 'x' and 'xlabel'");
+    throw makeKnownError(ERROR_WITH_PLOT_URL, error);
   }
   if (!y || !y_desc) {
-    throw new Error("Need query string variables 'y' and 'ylabel'");
+    var error = new Error("Need query string variables 'y' and 'ylabel'");
+    throw makeKnownError(ERROR_WITH_PLOT_URL, error);
   }
 
   var x_index = -1,
@@ -57,7 +66,8 @@ function parse_vars_xy(query_vars, header) {
   }
 
   if (x_index < 0 || y_index < 0) {
-    throw new Error("Query var not in header");
+    var error = new Error("Query var not in header");
+    throw makeKnownError(ERROR_PLOT_URL_DOESNT_MATCH_DATA, error);
   }
 
   return {
@@ -93,6 +103,10 @@ const visualizations = {
     // Script and render function
     script: "/assets/plots/basic-scatterplot.js",
     render: function(data) {
+      if (!window.basic_scatterplot) {
+        throw makeKnownError(ERROR_APP_RESOURCE_DOESNT_EXIST,
+          new Error("basic_scatterplot function isn't defined"));
+      }
       return basic_scatterplot(data);
     },
     // Iterating through the report graphics

@@ -6,22 +6,24 @@ layout: default
 
 <div id="plot-container" class="plot-container">
   <div class="plot-header">
-    <div id="plot-back-button" class="plot-back-button top-option">
-      &#8592; Back to Report
+    <div id="report-new-button" class="report-new-button">
+      <a href="/" target="_blank" class="report-new-text">New Spreadsheet</a>
     </div>
+
     <div class="plot-top-options">
+      <div id="plot-back-button" class="top-option invisible">&#8592; Back to Report</div>
       <div class="top-option">Saved Reports</div>
       <div class="top-option">Settings</div>
     </div>
   </div>
 
-  <div id="plot-processing" class="plot-processing hidden">
+  <div id="plot-processing" class="processing hidden">
     {%- include loading-plot.html -%}
     {%- include link-google.html -%}
     {%- include loading-issue.html -%}
   </div>
 
-  <div id="plot" class="plot hidden">
+  <div id="plot" class="plot invisible">
     <div class="plot-spreadsheet-header">
       <div class="plot-spreadsheet-header-title">
         <a id="plot-spreadsheet-url" class="plot-spreadsheet-url" target="_blank" rel="noopener noreferrer">

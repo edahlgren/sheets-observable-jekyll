@@ -1,6 +1,15 @@
 // Imports ------------------------------------
 
 import loadScript from "../loadScript.js";
+import {
+  ERROR_CANT_GET_APP_FILE,
+  ERROR_NO_VISUALIZATIONS,
+  ERROR_PREPARING_VISUALIZATION_INPUT,
+  ERROR_RENDERING_VISUALIZATION,
+  ERROR_FORMATTING_VISUALIZATION,
+  isKnownError,
+  makeKnownError
+} from "../errors.js";
 import visualizations from "../visualizations.js";
 
 // Methods ------------------------------------
@@ -60,7 +69,8 @@ function organize_fields(fields) {
 
   return {
     all: fields,
-    numericalRandom: numerical_random
+    numericalRandom: numerical_random,
+    isMalformed: false
   };
 }
 
@@ -86,6 +96,7 @@ function match_header_to_fields(fields, header) {
 
   // Return new format
   return {
+    all: fields.all,
     get: function(field) {
       return fields_map.get(field);
     },
@@ -151,7 +162,11 @@ async function load_designs(fields, loader) {
 
   // Handle no visulizations
   if (chosen.length == 0) {
-    throw new Error(errors.NO_VISUALIZATIONS);
+    var distributions = fields.all.map(function(field) {
+      return field.field + ":" + field.distribution;
+    });
+    var error = new Error("fields: " + JSON.stringify(distributions, null, 2));
+    throw makeKnownError(ERROR_NO_VISUALIZATIONS, error);
   }
 
   // Actually load the scripts
@@ -167,7 +182,11 @@ async function load_scripts(scripts, loader) {
 
   for (var i = 1; i <= total; i++) {
     loader.desc.textContent = i + "/" + total;
-    await loadScript(scripts[i - 1]);
+    try {
+      await loadScript(scripts[i - 1]);
+    } catch (error) {
+      throw makeKnownError(ERROR_CANT_GET_APP_FILE, error);
+    }
     loader.bar.style.width = (i == total ? 100 : 20 + (interval * i)) + "%";
   }
 }
@@ -197,31 +216,51 @@ async function render_visualizations(config, loader) {
 
     // Iterate through visualization
     for (var j = 0; j < v.iterations.length; j++) {
-      var iter = v.iterations[j];
+      var iter = v.iterations[j],
+          input = null,
+          svg = null,
+          plot = null;
+
       loader.desc.textContent = pn + "/" + total;
 
       // Get the data needed for this iteration
-      var input = v.iterationData(iter, config.fields, config.data.slice(1));
-
-      // Make the visualization
-      var svg = await v.render(input);
-
-      // Get a title to describe the visualization
-      var titles = v.iterationTitles(iter, config.fields);
-
-      // Make the plot url
-      var url = "/plot?id=" + config.id +
-                "&sheet=" + config.sheet +
-                "&pn=" + pn +
-                "&v=" + v.type;
-
-      var extraQueryVars = v.makeQueryVars(iter, config.fields);
-      if (extraQueryVars.length > 0) {
-        url += "&" + extraQueryVars.join("&");
+      try {
+        input = v.iterationData(iter, config.fields, config.data.slice(1));
+      } catch (error) {
+        throw makeKnownError(ERROR_PREPARING_VISUALIZATION_INPUT, error);
       }
 
-      // Put the plot into a DOM element
-      var plot = format_plot(pn, url, n, titles, svg);
+      // Make the visualization
+      try {
+        svg = await v.render(input);
+      } catch (error) {
+        if (isKnownError(error)) {
+          throw error;
+        }
+        throw makeKnownError(ERROR_RENDERING_VISUALIZATION, error);
+      }
+
+      // Format the plot
+      try {
+        // Get a title to describe the visualization
+        var titles = v.iterationTitles(iter, config.fields);
+
+        // Make the plot url
+        var url = "/plot?id=" + config.id +
+                  "&sheet=" + config.sheet +
+                  "&pn=" + pn +
+                  "&v=" + v.type;
+
+        var extraQueryVars = v.makeQueryVars(iter, config.fields);
+        if (extraQueryVars.length > 0) {
+          url += "&" + extraQueryVars.join("&");
+        }
+
+        // Put the plot into a DOM element
+        plot = format_plot(pn, url, n, titles, svg);
+      } catch (error) {
+        throw makeKnownError(ERROR_FORMATTING_VISUALIZATION, error);
+      }
 
       // Add the plot element to the container
       plots.appendChild(plot);

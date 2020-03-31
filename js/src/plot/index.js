@@ -4,13 +4,34 @@ import { getGoogleApi } from "../google.js";
 import loadScript from "../loadScript.js";
 import visualizations from "../visualizations.js";
 
+import {
+  ERROR_CANT_GET_APP_FILE,
+  ERROR_PREPARING_VISUALIZATION_INPUT,
+  ERROR_RENDERING_VISUALIZATION,
+  ERROR_FORMATTING_VISUALIZATION,
+  ISSUE_SPREADSHEET_ACCESS,
+  ISSUE_NO_SHEET,
+  ISSUE_URL_NO_SPREADSHEET_ID,
+  ISSUE_URL_NO_SPREADSHEET_SHEET,
+  ISSUE_URL_NO_VISUALIZATION,
+  ISSUE_URL_VISUALIZATION_NOT_SUPPORTED,
+  isKnownError,
+  makeKnownError,
+  isAuthIssue,
+  showLoadingKnownIssue,
+  showLoadingBug
+} from "../errors.js";
+
 // DOM -----------------------------------------
 
 // Header buttons
-var back_button = document.getElementById("plot-back-button");
+var top_left_options = document.getElementById("left-top-options"),
+    back_button = document.getElementById("plot-back-button");
 
 // Loading plot
-var processing = document.getElementById("plot-processing");
+var processing = document.getElementById("plot-processing"),
+    loader = document.getElementById("plot-loader");
+
 var part1 = document.getElementById("plot-loader-part1"),
     load_part1_bar = part1.querySelector(".plot-loader-bar-complete"),
     load_part1_desc = part1.querySelector(".plot-loader-part-desc");
@@ -116,46 +137,105 @@ function load_from_message(msg) {
   plot_title.textContent = msg.title;
   actual_plot.innerHTML = msg.resource;
 
-  plot.classList.remove("hidden");
+  if (!id) {
+    return showLoadingKnownIssue(ISSUE_URL_NO_SPREADSHEET_ID);
+  }
+  back_button.classList.remove("invisible");
+  plot.classList.remove("invisible");
 }
 
 request_plot();
 
 // Load the visualization from scratch ----------
 
-async function load_from_scratch() {
-  processing.classList.remove("hidden");
+const CHECK_VISUALIZATION_SUPPORTED = 0,
+      SETUP_GOOGLE_API = 1,
+      STEP_GET_METADATA = 2,
+      STEP_CHECK_SHEET = 3,
+      STEP_DOWNLOAD_DATA = 4,
+      STEP_PARSE_QUERY_VARS = 5,
+      STEP_LOAD_DESIGN = 6,
+      STEP_LOAD_INPUT = 7,
+      STEP_RENDER_DESIGN = 8,
+      STEP_FORMAT_DESIGN = 9,
+      STEP_UNKNOWN = 10;
 
-  try {
-    await __load_visualization();
-  } catch (error) {
-    console.log("[error]", error);
-    return;
+function stepToString(step) {
+  switch (step) {
+  case CHECK_VISUALIZATION_SUPPORTED:
+    return "Check visualization is supported";
+  case SETUP_GOOGLE_API:
+    return "Setting up Google API";
+  case STEP_GET_METADATA:
+    return "Getting spreadsheet metadata";
+  case STEP_CHECK_SHEET:
+    return "Checking that sheet exists";
+  case STEP_DOWNLOAD_DATA:
+    return "Downloading data";
+  case STEP_PARSE_QUERY_VARS:
+    return "Parsing query variables";
+  case STEP_LOAD_DESIGN:
+    return "Loading design";
+  case STEP_LOAD_INPUT:
+    return "Loading input";
+  case STEP_RENDER_DESIGN:
+    return "Rendering visualization";
+  case STEP_FORMAT_DESIGN:
+    return "Formatting visualization";
+  case STEP_UNKNOWN:
+  default:
+    return "unknown";
   }
-
-  processing.classList.add("hidden");
-  plot.classList.remove("hidden");
 }
 
-async function __load_visualization() {
+function showIssue(step, error) {
+  if (!showLoadingKnownIssue(null, error)) {
+    showLoadingBug(stepToString(step), error);
+  }
+}
+
+function showBug(step, error) {
+  showLoadingBug(stepToString(step), error);
+}
+
+async function load_from_scratch() {
+  loader.classList.add("hidden");
+  processing.classList.remove("hidden");
+
+  if (!id) {
+    return showLoadingKnownIssue(ISSUE_URL_NO_SPREADSHEET_ID);
+  }
+  back_button.classList.remove("invisible");
+
+  if (!sheet)
+    return showLoadingKnownIssue(ISSUE_URL_NO_SPREADSHEET_SHEET);
+  if (!visualization)
+    return showLoadingKnownIssue(ISSUE_URL_NO_VISUALIZATION);
+  if (!visualizations.hasOwnProperty(visualization))
+    return showLoadingKnownIssue(ISSUE_URL_VISUALIZATION_NOT_SUPPORTED);
+
+  loader.classList.remove("hidden");
+
+  // This should go away when I switch to one template per
+  // visualization type
+  var vspec = visualizations[visualization];
+  try {
+    await __load_visualization(vspec);
+  } catch (error) {
+    showBug(STEP_UNKNOWN, error);
+  }
+}
+
+async function __load_visualization(vspec) {
   var auth = {},
       api = null,
       metadata = null,
       vars = null,
       data = null,
+      input = null,
       svg = null;
 
-  // TODO: Make auth
-  // TODO: Handle errors
-
   // Part 1 --------------------------------------
-
-  // This should go away when I switch to one template per
-  // visualization type
-  if (!visualizations.hasOwnProperty(visualization)) {
-    throw new Error("No visualization named " + visualization);
-  }
-  var vspec = visualizations[visualization];
 
   try {
     api = await getGoogleApi(auth, {
@@ -163,25 +243,35 @@ async function __load_visualization() {
       desc: load_part1_desc
     });
   } catch (error) {
-    console.log("[error: get google api]", error);
-    throw error;
+    showIssue(SETUP_GOOGLE_API, error);
+    return;
   }
 
   load_part1_desc.textContent = "Getting metadata";
   try {
     metadata = await api.getSpreadsheetMetadata(id);
   } catch (error) {
-    console.log("[error: access spreadsheet]", error);
-    throw error;
+    if (isAuthIssue(error)) {
+      showLoadingKnownIssue(ISSUE_SPREADSHEET_ACCESS);
+      return;
+    }
+    showIssue(STEP_GET_METADATA, error);
+    return;
   }
   load_part1_bar.style.width = 45 + "%";
 
   load_part1_desc.textContent = "Checking sheet";
-  var sheets = metadata.sheets.map(function(s) {
-    return s.properties.title;
-  });
-  if (!sheets.includes(sheet)) {
-    throw new Error("No sheet named " + sheet);
+  try {
+    var sheets = metadata.sheets.map(function(s) {
+      return s.properties.title;
+    });
+    if (!sheets.includes(sheet)) {
+      showLoadingKnownIssue(ISSUE_NO_SHEET);
+      return;
+    }
+  } catch (error) {
+    showIssue(STEP_CHECK_SHEET, error);
+    return;
   }
   load_part1_bar.style.width = 50 + "%";
 
@@ -189,8 +279,8 @@ async function __load_visualization() {
   try {
     data = await api.getSpreadsheetValues(id, sheet);
   } catch (error) {
-    console.log("[error: loading data]", error);
-    throw error;
+    showIssue(STEP_DOWNLOAD_DATA, error);
+    return;
   }
   load_part1_bar.style.width = 70 + "%";
 
@@ -198,8 +288,8 @@ async function __load_visualization() {
   try {
     vars = vspec.parseQueryVars(qvars, data[0]);
   } catch (error) {
-    console.log("[error: parsing query vars]", error);
-    throw error;
+    showIssue(STEP_PARSE_QUERY_VARS, error);
+    return;
   }
   load_part1_bar.style.width = 100 + "%";
 
@@ -209,28 +299,44 @@ async function __load_visualization() {
   try {
     await loadScript(vspec.script);
   } catch (error) {
-    console.log("[error: loading script]", error);
-    throw error;
+    var error = makeKnownError(ERROR_CANT_GET_APP_FILE, error);
+    showIssue(STEP_LOAD_DESIGN, error);
+    return;
   }
   load_part2_bar.style.width = 25 + "%";
 
   load_part2_desc.textContent = "Formatting input";
-  var input = vspec.plotData(vars, data);
+  try {
+    input = vspec.plotData(vars, data);
+  } catch (error) {
+    var error = makeKnownError(ERROR_PREPARING_VISUALIZATION_INPUT, error);
+    showIssue(STEP_LOAD_INPUT, error);
+    return;
+  }
   load_part2_bar.style.width = 50 + "%";
 
   load_part2_desc.textContent = "Rendering";
   try {
     svg = await vspec.render(input);
   } catch (error) {
-    console.log("[error: rendering]", error);
-    throw error;
+    if (!isKnownError(error)) {
+      error = makeKnownError(ERROR_RENDERING_VISUALIZATION, error);
+    }
+    showIssue(STEP_RENDER_DESIGN, error);
+    return;
+  }
+  try {
+    plot_spreadsheet_title.textContent = metadata.properties.title;
+    plot_spreadsheet_link.href = metadata.spreadsheetUrl;
+    plot_title.textContent = vspec.plotTitle(vars);
+    actual_plot.appendChild(svg);
+  } catch (error) {
+    error = makeKnownError(ERROR_FORMATTING_VISUALIZATION, error);
+    showIssue(STEP_FORMAT_DESIGN, error);
+    return;
   }
   load_part2_bar.style.width = 100 + "%";
 
-  // Fill in the plot
-  plot_spreadsheet_title.textContent = metadata.properties.title;
-  plot_spreadsheet_link.href = metadata.spreadsheetUrl;
-
-  plot_title.textContent = vspec.plotTitle(vars);
-  actual_plot.appendChild(svg);
+  processing.classList.add("hidden");
+  plot.classList.remove("invisible");
 }

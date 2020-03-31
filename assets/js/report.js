@@ -2801,28 +2801,53 @@
 	  }
 	});
 
-	var ERROR_GOOGLE_RESOURCE_DOESNT_EXIST = 0,
-	    ERROR_APP_RESOURCE_DOESNT_EXIST = 1,
-	    ERROR_GOOGLE_SERVER_ISSUE = 2,
-	    ERROR_GOOGLE_CLIENT_INIT = 3,
-	    ERROR_GOOGLE_CLIENT_MISCONFIGURED = 4,
-	    ERROR_SPREADSHEET_UNAUTHORIZED = 5,
-	    ERROR_NO_SPREADSHEET = 6,
-	    ERROR_SPREADSHEET_API_GET = 7,
-	    ERROR_SPREADSHEET_VALUES_API_GET = 8,
-	    ERROR_BAD_SPREADSHEET_RANGE = 9;
-	var ISSUE_GOOGLE_RESOURCE = 0,
-	    ISSUE_GOOGLE_API = 1,
-	    ISSUE_SPREADSHEET_ACCESS = 2,
-	    ISSUE_SPREADSHEET_DOESNT_EXIST = 3,
-	    ISSUE_NO_FIELDS_SHEET = 4,
-	    ISSUE_BAD_FIELDS_SHEET = 5,
-	    ISSUE_FIELDS_SHEET_SYNC = 6;
+	var ERROR_CANT_GET_GOOGLE_FILE = 0,
+	    ERROR_GOOGLE_RESOURCE_DOESNT_EXIST = 1,
+	    ERROR_CANT_GET_APP_FILE = 2,
+	    ERROR_APP_RESOURCE_DOESNT_EXIST = 3,
+	    ERROR_GOOGLE_SERVER_ISSUE = 4,
+	    ERROR_GOOGLE_CLIENT_INIT = 5,
+	    ERROR_GOOGLE_CLIENT_MISCONFIGURED = 6,
+	    ERROR_SPREADSHEET_UNAUTHORIZED = 7,
+	    ERROR_NO_SPREADSHEET = 8,
+	    ERROR_SPREADSHEET_API_GET = 9,
+	    ERROR_SPREADSHEET_VALUES_API_GET = 10,
+	    ERROR_BAD_SPREADSHEET_RANGE = 11,
+	    ERROR_NO_VISUALIZATIONS = 12,
+	    ERROR_PREPARING_VISUALIZATION_INPUT = 13,
+	    ERROR_RENDERING_VISUALIZATION = 14,
+	    ERROR_FORMATTING_VISUALIZATION = 15,
+	    ERROR_WITH_PLOT_URL = 16,
+	    ERROR_PLOT_URL_DOESNT_MATCH_DATA = 17;
+	var ISSUE_GOOGLE_FILE = 0,
+	    ISSUE_GOOGLE_SETUP = 1,
+	    ISSUE_GOOGLE_API = 2,
+	    ISSUE_APP_FILE = 3,
+	    ISSUE_APP_SETUP = 4,
+	    ISSUE_SPREADSHEET_ACCESS = 5,
+	    ISSUE_SPREADSHEET_DOESNT_EXIST = 6,
+	    ISSUE_NO_SHEET = 7,
+	    ISSUE_NO_FIELDS_SHEET = 8,
+	    ISSUE_BAD_FIELDS_SHEET = 9,
+	    ISSUE_FIELDS_SHEET_SYNC = 10,
+	    ISSUE_NO_VISUALIZATIONS = 11,
+	    ISSUE_URL_NO_SPREADSHEET_ID = 12,
+	    ISSUE_URL_NO_SPREADSHEET_SHEET = 13,
+	    ISSUE_URL_NO_VISUALIZATION = 14,
+	    ISSUE_URL_VISUALIZATION_NOT_SUPPORTED = 15,
+	    ISSUE_URL_PLOT_GENERAL = 16,
+	    ISSUE_URL_PLOT_DOESNT_MATCH_DATA = 17;
 
 	function errorToString(error_code) {
 	  switch (error_code) {
+	    case ERROR_CANT_GET_GOOGLE_FILE:
+	      return "Can't get Google file";
+
 	    case ERROR_GOOGLE_RESOURCE_DOESNT_EXIST:
 	      return "Google resource doesn't exit";
+
+	    case ERROR_CANT_GET_APP_FILE:
+	      return "Can't get App file";
 
 	    case ERROR_APP_RESOURCE_DOESNT_EXIST:
 	      return "App resource doesn't exit";
@@ -2851,6 +2876,24 @@
 	    case ERROR_BAD_SPREADSHEET_RANGE:
 	      return "Bad spreadsheet range";
 
+	    case ERROR_NO_VISUALIZATIONS:
+	      return "No visualizations for this spreadsheet";
+
+	    case ERROR_PREPARING_VISUALIZATION_INPUT:
+	      return "Issue preparing visualization input";
+
+	    case ERROR_RENDERING_VISUALIZATION:
+	      return "Issue rendering visualization";
+
+	    case ERROR_FORMATTING_VISUALIZATION:
+	      return "Issue formatting visualization for the web";
+
+	    case ERROR_WITH_PLOT_URL:
+	      return "Plot url isn't formatted correctly";
+
+	    case ERROR_PLOT_URL_DOESNT_MATCH_DATA:
+	      return "Plot url doesn't match data header";
+
 	    default:
 	      return "App code general issue";
 	  }
@@ -2858,11 +2901,17 @@
 
 	function issueToString(issue_code) {
 	  switch (issue_code) {
-	    case ISSUE_GOOGLE_RESOURCE:
+	    case ISSUE_GOOGLE_FILE:
 	      return "A necessary file provided by Google can't be downloaded right now. The best thing to do is to check your internet connection or try again in 15 minutes.";
+
+	    case ISSUE_GOOGLE_SETUP:
+	      return "A necessary API provided by Google can't be set up right now. The best thing to do is to check your internet connection or try again in 15 minutes.";
 
 	    case ISSUE_GOOGLE_API:
 	      return "A Google API needed by this demo isn't working right now. This type of issue is usually fixed by Google fairly quickly. The best thing to do is to try again in 15 minutes.";
+
+	    case ISSUE_APP_FILE:
+	      return "Part of this demo can't be downloaded right now. The best thing to do is to check your internet connection and try again.";
 
 	    case ISSUE_SPREADSHEET_ACCESS:
 	      return "It looks like you don't have access to this spreadsheet. Make sure the owner of this spreadsheet has shared it with you and then try again.";
@@ -2873,7 +2922,25 @@
 	    case ISSUE_NO_FIELDS_SHEET:
 	    case ISSUE_BAD_FIELDS_SHEET:
 	    case ISSUE_FIELDS_SHEET_SYNC:
-	      return "It looks like you're trying to visualize a spreadsheet that isn't supported yet. The best thing to do is to click the 'New Spreadsheet' button above and choose one of the sample spreadsheets.";
+	      return "It looks like you're trying to visualize a spreadsheet that isn't supported yet. The best thing to do is to click the 'New Spreadsheet' button above and choose one of the supported sample spreadsheets.";
+
+	    case ISSUE_NO_VISUALIZATIONS:
+	      return "This is very unusual, but it looks like there are no visualizations for your data. This can happen if your spreadsheet doesn't have enough data. This shouldn't happen with the supported sample spreadsheets. So the best thing to do is to click the 'New Spreadsheet' button above and choose one of the sample spreadsheets.";
+
+	    case ISSUE_NO_SHEET:
+	      return "The sheet in the url above doesn't seem to exist in the spreadsheet anymore. The best thing to do is to click 'Back to Report' and refresh the page to regenerate the report and select a visualization again.";
+
+	    case ISSUE_URL_NO_SPREADSHEET_ID:
+	      return "It looks like there's something wrong with the url above. This can happen if you accidently changed the url above or if you opened a broken link. The best thing to do is to click the 'New Spreadsheet' button above and visualize the spreadsheet you're interested in again.";
+
+	    case ISSUE_URL_NO_SPREADSHEET_SHEET:
+	    case ISSUE_URL_NO_VISUALIZATION:
+	    case ISSUE_URL_VISUALIZATION_NOT_SUPPORTED:
+	    case ISSUE_URL_PLOT_GENERAL:
+	      return "It looks like there's something wrong with the url above. This can happen if you accidently changed the url above or if you opened a broken link. The best thing to do is to click 'Back to Report' and try selecting this visualization again.";
+
+	    case ISSUE_URL_PLOT_DOESNT_MATCH_DATA:
+	      return "It looks like some of columns in this spreadsheet were renamed or removed so this visualization can't be generated anymore. The best thing to do is to click 'Back to Report' and refresh the page to regenerate the report so all visualizations are based on what the spreadsheet looks right now.";
 
 	    default:
 	      return "";
@@ -2882,8 +2949,17 @@
 
 	function errorToIssue(error_code) {
 	  switch (error_code) {
+	    case ERROR_CANT_GET_GOOGLE_FILE:
+	      return ISSUE_GOOGLE_FILE;
+
 	    case ERROR_GOOGLE_RESOURCE_DOESNT_EXIST:
-	      return ISSUE_GOOGLE_RESOURCE;
+	      return ISSUE_GOOGLE_SETUP;
+
+	    case ERROR_CANT_GET_APP_FILE:
+	      return ISSUE_APP_FILE;
+
+	    case ERROR_APP_RESOURCE_DOESNT_EXIST:
+	      return ISSUE_APP_SETUP;
 
 	    case ERROR_GOOGLE_SERVER_ISSUE:
 	    case ERROR_GOOGLE_CLIENT_INIT:
@@ -2894,6 +2970,15 @@
 
 	    case ERROR_NO_SPREADSHEET:
 	      return ISSUE_SPREADSHEET_DOESNT_EXIST;
+
+	    case ERROR_NO_VISUALIZATIONS:
+	      return ISSUE_NO_VISUALIZATIONS;
+
+	    case ERROR_WITH_PLOT_URL:
+	      return ISSUE_URL_PLOT_GENERAL;
+
+	    case ERROR_PLOT_URL_DOESNT_MATCH_DATA:
+	      return ISSUE_URL_PLOT_DOESNT_MATCH_DATA;
 
 	    default:
 	      return -1;
@@ -2945,7 +3030,7 @@
 	  bug_report.classList.add("hidden");
 	  issue_container.classList.remove("hidden");
 	  issue.classList.remove("hidden");
-	  console.error("[known error]", error);
+	  if (error) console.error("[known error]", error);
 	  return true;
 	}
 
@@ -2973,10 +3058,35 @@
 	    discoveryDocs = ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
 	    scopes = ["https://www.googleapis.com/auth/spreadsheets.readonly"];
 
+	function gapi_doesnt_exist() {
+	  var error = new Error("gapi library wasn't created");
+	  return makeKnownError(ERROR_GOOGLE_RESOURCE_DOESNT_EXIST, error);
+	}
+
+	function gapi_client_doesnt_exist() {
+	  var error = new Error("gapi.client library wasn't created");
+	  return makeKnownError(ERROR_GOOGLE_RESOURCE_DOESNT_EXIST, error);
+	}
+
+	function gapi_client_sheets_doesnt_exist() {
+	  var error = new Error("gapi.client.sheets library wasn't created");
+	  return makeKnownError(ERROR_GOOGLE_RESOURCE_DOESNT_EXIST, error);
+	}
+
+	function gapi_auth_doesnt_exist() {
+	  var error = new Error("gapi.auth library wasn't created");
+	  return makeKnownError(ERROR_GOOGLE_RESOURCE_DOESNT_EXIST, error);
+	}
+
+	function gapi_auth_instance_doesnt_exist() {
+	  var error = new Error("gapi.auth.getAuthInstance() is null");
+	  return makeKnownError(ERROR_GOOGLE_RESOURCE_DOESNT_EXIST, error);
+	}
+
 	function load_script() {
 	  return new Promise(function (resolve, reject) {
 	    loadScript("https://apis.google.com/js/api.js").then(resolve).catch(function (error) {
-	      error = makeKnownError(ERROR_GOOGLE_RESOURCE_DOESNT_EXIST, error);
+	      error = makeKnownError(ERROR_CANT_GET_GOOGLE_FILE, error);
 	      reject(error);
 	    });
 	  });
@@ -2984,8 +3094,7 @@
 
 	function load_client() {
 	  return new Promise(function (resolve, reject) {
-	    if (!gapi) ;
-
+	    if (!gapi) return reject(gapi_doesnt_exist());
 	    gapi.load('client:auth2', {
 	      callback: resolve,
 	      onerror: function onerror(error) {
@@ -2998,10 +3107,8 @@
 
 	function init_client() {
 	  return new Promise(function (resolve, reject) {
-	    if (!gapi) ;
-
-	    if (!gapi.client) ;
-
+	    if (!gapi) return reject(gapi_doesnt_exist());
+	    if (!gapi.client) return reject(gapi_client_doesnt_exist());
 	    var config = {
 	      clientId: clientId,
 	      apiKey: apiKey,
@@ -3109,12 +3216,9 @@
 	  },
 	  getSpreadsheetMetadata: function getSpreadsheetMetadata(id) {
 	    return new Promise(function (resolve, reject) {
-	      if (!gapi) ;
-
-	      if (!gapi.client) ;
-
-	      if (!gapi.client.sheets) ;
-
+	      if (!gapi) return reject(gapi_doesnt_exist());
+	      if (!gapi.client) return reject(gapi_client_doesnt_exist());
+	      if (!gapi.client.sheets) return reject(gapi_client_sheets_doesnt_exist());
 	      var config = {
 	        spreadsheetId: id
 	      };
@@ -3151,12 +3255,9 @@
 	  },
 	  getSpreadsheetValues: function getSpreadsheetValues(id, range) {
 	    return new Promise(function (resolve, reject) {
-	      if (!gapi) ;
-
-	      if (!gapi.client) ;
-
-	      if (!gapi.client.sheets) ;
-
+	      if (!gapi) return reject(gapi_doesnt_exist());
+	      if (!gapi.client) return reject(gapi_client_doesnt_exist());
+	      if (!gapi.client.sheets) return reject(gapi_client_sheets_doesnt_exist());
 	      var config = {
 	        spreadsheetId: id,
 	        range: range
@@ -3218,12 +3319,9 @@
 	    }
 
 	    initialize(loader).then(function (timing) {
-	      if (!gapi) ;
-
-	      if (!gapi.auth2) ;
-
-	      if (!gapi.auth2.getAuthInstance()) ;
-
+	      if (!gapi) return reject(gapi_doesnt_exist());
+	      if (!gapi.auth2) return reject(gapi_auth_doesnt_exist());
+	      if (!gapi.auth2.getAuthInstance()) return reject(gapi_auth_instance_doesnt_exist());
 	      setup_auth(auth_config);
 	      initialized = true;
 	      resolve(api);
@@ -3330,11 +3428,13 @@
 	      y_desc = query_vars.get("ylabel");
 
 	  if (!x || !x_desc) {
-	    throw new Error("Need query string variables 'x' and 'xlabel'");
+	    var error = new Error("Need query string variables 'x' and 'xlabel'");
+	    throw makeKnownError(ERROR_WITH_PLOT_URL, error);
 	  }
 
 	  if (!y || !y_desc) {
-	    throw new Error("Need query string variables 'y' and 'ylabel'");
+	    var error = new Error("Need query string variables 'y' and 'ylabel'");
+	    throw makeKnownError(ERROR_WITH_PLOT_URL, error);
 	  }
 
 	  var x_index = -1,
@@ -3352,7 +3452,8 @@
 	  }
 
 	  if (x_index < 0 || y_index < 0) {
-	    throw new Error("Query var not in header");
+	    var error = new Error("Query var not in header");
+	    throw makeKnownError(ERROR_PLOT_URL_DOESNT_MATCH_DATA, error);
 	  }
 
 	  return {
@@ -3393,6 +3494,10 @@
 	    // Script and render function
 	    script: "/assets/plots/basic-scatterplot.js",
 	    render: function render(data) {
+	      if (!window.basic_scatterplot) {
+	        throw makeKnownError(ERROR_APP_RESOURCE_DOESNT_EXIST, new Error("basic_scatterplot function isn't defined"));
+	      }
+
 	      return basic_scatterplot(data);
 	    },
 	    // Iterating through the report graphics
@@ -3467,7 +3572,8 @@
 	  });
 	  return {
 	    all: fields,
-	    numericalRandom: numerical_random
+	    numericalRandom: numerical_random,
+	    isMalformed: false
 	  };
 	}
 
@@ -3488,6 +3594,7 @@
 
 
 	  return {
+	    all: fields.all,
 	    get: function get(field) {
 	      return fields_map.get(field);
 	    },
@@ -3514,7 +3621,7 @@
 
 	function _load_designs() {
 	  _load_designs = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(fields, loader) {
-	    var scripts, chosen, combos_numerical_random, _i, _Object$keys, key, v;
+	    var scripts, chosen, combos_numerical_random, _i, _Object$keys, key, v, distributions, error;
 
 	    return regeneratorRuntime.wrap(function _callee$(_context) {
 	      while (1) {
@@ -3567,20 +3674,24 @@
 	            loader.bar.style.width = 20 + "%"; // Handle no visulizations
 
 	            if (!(chosen.length == 0)) {
-	              _context.next = 7;
+	              _context.next = 9;
 	              break;
 	            }
 
-	            throw new Error(errors.NO_VISUALIZATIONS);
-
-	          case 7:
-	            _context.next = 9;
-	            return load_scripts(Array.from(scripts.values()), loader);
+	            distributions = fields.all.map(function (field) {
+	              return field.field + ":" + field.distribution;
+	            });
+	            error = new Error("fields: " + JSON.stringify(distributions, null, 2));
+	            throw makeKnownError(ERROR_NO_VISUALIZATIONS, error);
 
 	          case 9:
+	            _context.next = 11;
+	            return load_scripts(Array.from(scripts.values()), loader);
+
+	          case 11:
 	            return _context.abrupt("return", chosen);
 
-	          case 10:
+	          case 12:
 	          case "end":
 	            return _context.stop();
 	        }
@@ -3606,28 +3717,38 @@
 
 	          case 2:
 	            if (!(i <= total)) {
-	              _context2.next = 10;
+	              _context2.next = 16;
 	              break;
 	            }
 
 	            loader.desc.textContent = i + "/" + total;
-	            _context2.next = 6;
+	            _context2.prev = 4;
+	            _context2.next = 7;
 	            return loadScript(scripts[i - 1]);
 
-	          case 6:
+	          case 7:
+	            _context2.next = 12;
+	            break;
+
+	          case 9:
+	            _context2.prev = 9;
+	            _context2.t0 = _context2["catch"](4);
+	            throw makeKnownError(ERROR_CANT_GET_APP_FILE, _context2.t0);
+
+	          case 12:
 	            loader.bar.style.width = (i == total ? 100 : 20 + interval * i) + "%";
 
-	          case 7:
+	          case 13:
 	            i++;
 	            _context2.next = 2;
 	            break;
 
-	          case 10:
+	          case 16:
 	          case "end":
 	            return _context2.stop();
 	        }
 	      }
-	    }, _callee2);
+	    }, _callee2, null, [[4, 9]]);
 	  }));
 	  return _load_scripts.apply(this, arguments);
 	}
@@ -3638,7 +3759,7 @@
 
 	function _render_visualizations() {
 	  _render_visualizations = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(config, loader) {
-	    var total, interval, pn, i, v, plots, n, j, iter, input, svg, titles, url, extraQueryVars, plot;
+	    var total, interval, pn, i, v, plots, n, j, iter, input, svg, plot, titles, url, extraQueryVars;
 	    return regeneratorRuntime.wrap(function _callee3$(_context3) {
 	      while (1) {
 	        switch (_context3.prev = _context3.next) {
@@ -3658,7 +3779,7 @@
 
 	          case 6:
 	            if (!(i < config.visualizations.length)) {
-	              _context3.next = 33;
+	              _context3.next = 53;
 	              break;
 	            }
 
@@ -3672,20 +3793,49 @@
 
 	          case 11:
 	            if (!(j < v.iterations.length)) {
-	              _context3.next = 29;
+	              _context3.next = 49;
 	              break;
 	            }
 
-	            iter = v.iterations[j];
+	            iter = v.iterations[j], input = null, svg = null, plot = null;
 	            loader.desc.textContent = pn + "/" + total; // Get the data needed for this iteration
 
-	            input = v.iterationData(iter, config.fields, config.data.slice(1)); // Make the visualization
+	            _context3.prev = 14;
+	            input = v.iterationData(iter, config.fields, config.data.slice(1));
+	            _context3.next = 21;
+	            break;
 
-	            _context3.next = 17;
+	          case 18:
+	            _context3.prev = 18;
+	            _context3.t0 = _context3["catch"](14);
+	            throw makeKnownError(ERROR_PREPARING_VISUALIZATION_INPUT, _context3.t0);
+
+	          case 21:
+	            _context3.prev = 21;
+	            _context3.next = 24;
 	            return v.render(input);
 
-	          case 17:
+	          case 24:
 	            svg = _context3.sent;
+	            _context3.next = 32;
+	            break;
+
+	          case 27:
+	            _context3.prev = 27;
+	            _context3.t1 = _context3["catch"](21);
+
+	            if (!isKnownError(_context3.t1)) {
+	              _context3.next = 31;
+	              break;
+	            }
+
+	            throw _context3.t1;
+
+	          case 31:
+	            throw makeKnownError(ERROR_RENDERING_VISUALIZATION, _context3.t1);
+
+	          case 32:
+	            _context3.prev = 32;
 	            // Get a title to describe the visualization
 	            titles = v.iterationTitles(iter, config.fields); // Make the plot url
 
@@ -3697,38 +3847,47 @@
 	            } // Put the plot into a DOM element
 
 
-	            plot = format_plot(pn, url, n, titles, svg); // Add the plot element to the container
+	            plot = format_plot(pn, url, n, titles, svg);
+	            _context3.next = 43;
+	            break;
 
+	          case 40:
+	            _context3.prev = 40;
+	            _context3.t2 = _context3["catch"](32);
+	            throw makeKnownError(ERROR_FORMATTING_VISUALIZATION, _context3.t2);
+
+	          case 43:
+	            // Add the plot element to the container
 	            plots.appendChild(plot); // Update loader
 
 	            loader.bar.style.width = (pn == total ? 100 : interval * pn) + "%"; // Increment the plot number
 
 	            pn += 1;
 
-	          case 26:
+	          case 46:
 	            j++;
 	            _context3.next = 11;
 	            break;
 
-	          case 29:
+	          case 49:
 	            // Add the plot to the root
 	            config.root.appendChild(plots);
 
-	          case 30:
+	          case 50:
 	            i++;
 	            _context3.next = 6;
 	            break;
 
-	          case 33:
+	          case 53:
 	            // If all that worked, then fill in the report title
 	            set_title(config.title, config.url);
 
-	          case 34:
+	          case 54:
 	          case "end":
 	            return _context3.stop();
 	        }
 	      }
-	    }, _callee3);
+	    }, _callee3, null, [[14, 18], [21, 27], [32, 40]]);
 	  }));
 	  return _render_visualizations.apply(this, arguments);
 	}
@@ -3912,13 +4071,7 @@
 	                  process$3(id, STEP_AFTER_AUTH);
 	                }
 	              }]
-	            }; // TODO: Test no gapi, gapi.client, gapi.auth2
-	            // TODO: Test choose_single_sheet
-	            // TODO: Test organize_fields
-	            // TODO: Test match_header_to_fields
-	            // TODO: Test load_designs
-	            // TODO: Test render_visualizations
-	            // Part 1 --------------------------------------
+	            }; // Part 1 --------------------------------------
 	            // Authenticating
 
 	            _context.prev = 3;
@@ -3997,121 +4150,122 @@
 	            return _context.abrupt("return");
 
 	          case 38:
-	            _context.next = 43;
+	            _context.next = 44;
 	            break;
 
 	          case 40:
 	            _context.prev = 40;
 	            _context.t2 = _context["catch"](33);
 	            showBug(STEP_CHOOSE_SHEET, _context.t2);
+	            return _context.abrupt("return");
 
-	          case 43:
+	          case 44:
 	            load_part1_bar.style.width = 50 + "%"; // Reading fields
 
 	            load_part1_desc.textContent = "Reading spreadsheet fields";
-	            _context.prev = 45;
-	            _context.next = 48;
+	            _context.prev = 46;
+	            _context.next = 49;
 	            return api.getSpreadsheetValues(id, sheet + ".fields");
 
-	          case 48:
+	          case 49:
 	            fields = _context.sent;
-	            _context.next = 55;
+	            _context.next = 56;
 	            break;
 
-	          case 51:
-	            _context.prev = 51;
-	            _context.t3 = _context["catch"](45);
+	          case 52:
+	            _context.prev = 52;
+	            _context.t3 = _context["catch"](46);
 	            showIssue(STEP_DOWNLOAD_FIELDS, _context.t3);
 	            return _context.abrupt("return");
 
-	          case 55:
+	          case 56:
 	            load_part1_bar.style.width = 70 + "%"; // Reading data
 
 	            load_part1_desc.textContent = "Reading spreadsheet data";
-	            _context.prev = 57;
-	            _context.next = 60;
+	            _context.prev = 58;
+	            _context.next = 61;
 	            return api.getSpreadsheetValues(id, sheet);
 
-	          case 60:
+	          case 61:
 	            data = _context.sent;
-	            _context.next = 67;
+	            _context.next = 68;
 	            break;
 
-	          case 63:
-	            _context.prev = 63;
-	            _context.t4 = _context["catch"](57);
+	          case 64:
+	            _context.prev = 64;
+	            _context.t4 = _context["catch"](58);
 	            showIssue(STEP_DOWNLOAD_DATA, _context.t4);
 	            return _context.abrupt("return");
 
-	          case 67:
+	          case 68:
 	            load_part1_bar.style.width = 90 + "%"; // Validating
 
 	            load_part1_desc.textContent = "Checking consistency";
-	            _context.prev = 69;
+	            _context.prev = 70;
 	            fields = organize_fields(fields);
 
 	            if (!fields.isMalformed) {
-	              _context.next = 74;
+	              _context.next = 75;
 	              break;
 	            }
 
 	            showLoadingKnownIssue(ISSUE_BAD_FIELDS_SHEET);
 	            return _context.abrupt("return");
 
-	          case 74:
-	            _context.next = 80;
+	          case 75:
+	            _context.next = 81;
 	            break;
 
-	          case 76:
-	            _context.prev = 76;
-	            _context.t5 = _context["catch"](69);
-	            showIssue(STEP_ORGANIZE_FIELDS, _context.t5);
+	          case 77:
+	            _context.prev = 77;
+	            _context.t5 = _context["catch"](70);
+	            showBug(STEP_ORGANIZE_FIELDS, _context.t5);
 	            return _context.abrupt("return");
 
-	          case 80:
-	            _context.prev = 80;
+	          case 81:
+	            _context.prev = 81;
 	            fields = match_header_to_fields(fields, data[0]);
 
 	            if (fields) {
-	              _context.next = 85;
+	              _context.next = 86;
 	              break;
 	            }
 
 	            showLoadingKnownIssue(ISSUE_FIELDS_SHEET_SYNC);
 	            return _context.abrupt("return");
 
-	          case 85:
-	            _context.next = 91;
+	          case 86:
+	            _context.next = 92;
 	            break;
 
-	          case 87:
-	            _context.prev = 87;
-	            _context.t6 = _context["catch"](80);
-	            showIssue(STEP_MATCH_FIELDS, _context.t6);
+	          case 88:
+	            _context.prev = 88;
+	            _context.t6 = _context["catch"](81);
+	            showBug(STEP_MATCH_FIELDS, _context.t6);
 	            return _context.abrupt("return");
 
-	          case 91:
+	          case 92:
 	            load_part1_bar.style.width = 100 + "%"; // Part 2 --------------------------------------
 
-	            _context.prev = 92;
-	            _context.next = 95;
+	            _context.prev = 93;
+	            _context.next = 96;
 	            return load_designs(fields, {
 	              bar: load_part2_bar,
 	              desc: load_part2_desc
 	            });
 
-	          case 95:
+	          case 96:
 	            designs = _context.sent;
-	            _context.next = 102;
+	            _context.next = 103;
 	            break;
 
-	          case 98:
-	            _context.prev = 98;
-	            _context.t7 = _context["catch"](92);
-	            showLoadingIssue(STEP_CHOOSE_VISUALIZATIONS, _context.t7);
+	          case 99:
+	            _context.prev = 99;
+	            _context.t7 = _context["catch"](93);
+	            showIssue(STEP_CHOOSE_VISUALIZATIONS, _context.t7);
 	            return _context.abrupt("return");
 
-	          case 102:
+	          case 103:
 	            // Part 3 --------------------------------------
 	            render_config = {
 	              root: report,
@@ -4123,32 +4277,32 @@
 	              visualizations: designs,
 	              data: data
 	            };
-	            _context.prev = 103;
-	            _context.next = 106;
+	            _context.prev = 104;
+	            _context.next = 107;
 	            return render_visualizations(render_config, {
 	              bar: load_part3_bar,
 	              desc: load_part3_desc
 	            });
 
-	          case 106:
-	            _context.next = 112;
+	          case 107:
+	            _context.next = 113;
 	            break;
 
-	          case 108:
-	            _context.prev = 108;
-	            _context.t8 = _context["catch"](103);
-	            showLoadingIssue(STEP_MAKE_VISUALIZATIONS, _context.t8);
+	          case 109:
+	            _context.prev = 109;
+	            _context.t8 = _context["catch"](104);
+	            showIssue(STEP_MAKE_VISUALIZATIONS, _context.t8);
 	            return _context.abrupt("return");
 
-	          case 112:
+	          case 113:
 	            finish(id, sheet);
 
-	          case 113:
+	          case 114:
 	          case "end":
 	            return _context.stop();
 	        }
 	      }
-	    }, _callee, null, [[3, 9], [14, 20], [33, 40], [45, 51], [57, 63], [69, 76], [80, 87], [92, 98], [103, 108]]);
+	    }, _callee, null, [[3, 9], [14, 20], [33, 40], [46, 52], [58, 64], [70, 77], [81, 88], [93, 99], [104, 109]]);
 	  }));
 	  return _process.apply(this, arguments);
 	}

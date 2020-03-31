@@ -1,5 +1,6 @@
 import loadScript from './loadScript.js';
 import {
+  ERROR_CANT_GET_GOOGLE_FILE,
   ERROR_GOOGLE_RESOURCE_DOESNT_EXIST,
   ERROR_GOOGLE_SERVER_ISSUE,
   ERROR_GOOGLE_CLIENT_INIT,
@@ -22,12 +23,37 @@ const clientId = '610692011464-m1oi9ddi7u31h92e09lg5s970luvak9a.apps.googleuserc
         "https://www.googleapis.com/auth/spreadsheets.readonly"
       ];
 
+function gapi_doesnt_exist() {
+  var error = new Error("gapi library wasn't created");
+  return makeKnownError(ERROR_GOOGLE_RESOURCE_DOESNT_EXIST, error);
+}
+
+function gapi_client_doesnt_exist() {
+  var error = new Error("gapi.client library wasn't created");
+  return makeKnownError(ERROR_GOOGLE_RESOURCE_DOESNT_EXIST, error);
+}
+
+function gapi_client_sheets_doesnt_exist() {
+  var error = new Error("gapi.client.sheets library wasn't created");
+  return makeKnownError(ERROR_GOOGLE_RESOURCE_DOESNT_EXIST, error);
+}
+
+function gapi_auth_doesnt_exist() {
+  var error = new Error("gapi.auth library wasn't created");
+  return makeKnownError(ERROR_GOOGLE_RESOURCE_DOESNT_EXIST, error);
+}
+
+function gapi_auth_instance_doesnt_exist() {
+  var error = new Error("gapi.auth.getAuthInstance() is null");
+  return makeKnownError(ERROR_GOOGLE_RESOURCE_DOESNT_EXIST, error);
+}
+
 function load_script() {
   return new Promise(function(resolve, reject) {
     loadScript(
       "https://apis.google.com/js/api.js"
     ).then(resolve).catch(function(error) {
-      error = makeKnownError(ERROR_GOOGLE_RESOURCE_DOESNT_EXIST, error);
+      error = makeKnownError(ERROR_CANT_GET_GOOGLE_FILE, error);
       reject(error);
     });
   });
@@ -35,8 +61,8 @@ function load_script() {
 
 function load_client() {
   return new Promise(function(resolve, reject) {
-    if (!gapi) {
-    }
+    if (!gapi)
+      return reject(gapi_doesnt_exist());
 
     gapi.load('client:auth2', {
       callback: resolve,
@@ -50,10 +76,10 @@ function load_client() {
 
 function init_client() {
   return new Promise(function(resolve, reject) {
-    if (!gapi) {
-    }
-    if (!gapi.client) {
-    }
+    if (!gapi)
+      return reject(gapi_doesnt_exist());
+    if (!gapi.client)
+      return reject(gapi_client_doesnt_exist());
 
     var config = {
       clientId: clientId,
@@ -174,12 +200,12 @@ var api = {
   },
   getSpreadsheetMetadata: function(id) {
     return new Promise(function(resolve, reject) {
-      if (!gapi) {
-      }
-      if (!gapi.client) {
-      }
-      if (!gapi.client.sheets) {
-      }
+      if (!gapi)
+        return reject(gapi_doesnt_exist());
+      if (!gapi.client)
+        return reject(gapi_client_doesnt_exist());
+      if (!gapi.client.sheets)
+        return reject(gapi_client_sheets_doesnt_exist());
 
       var config = {
         spreadsheetId: id
@@ -214,12 +240,12 @@ var api = {
   },
   getSpreadsheetValues: function(id, range) {
     return new Promise(function(resolve, reject) {
-      if (!gapi) {
-      }
-      if (!gapi.client) {
-      }
-      if (!gapi.client.sheets) {
-      }
+      if (!gapi)
+        return reject(gapi_doesnt_exist());
+      if (!gapi.client)
+        return reject(gapi_client_doesnt_exist());
+      if (!gapi.client.sheets)
+        return reject(gapi_client_sheets_doesnt_exist());
 
       var config = {
         spreadsheetId: id,
@@ -276,14 +302,15 @@ function get_api(auth_config, loader) {
       return resolve(api);
     }
     initialize(loader).then(function(timing) {
-      if (!gapi) {
-      }
-      if (!gapi.auth2) {
-      }
-      if (!gapi.auth2.getAuthInstance()) {
-      }
+      if (!gapi)
+        return reject(gapi_doesnt_exist());
+      if (!gapi.auth2)
+        return reject(gapi_auth_doesnt_exist());
+      if (!gapi.auth2.getAuthInstance())
+        return reject(gapi_auth_instance_doesnt_exist());
 
       setup_auth(auth_config);
+
       initialized = true;
       resolve(api);
     }).catch(reject);

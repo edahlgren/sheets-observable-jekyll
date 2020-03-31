@@ -1,6 +1,7 @@
 // Imports ------------------------------------
 
 import { makeSpreadsheetUrl, getGoogleApi } from "../google.js";
+
 import {
   ISSUE_SPREADSHEET_ACCESS,
   ISSUE_NO_FIELDS_SHEET,
@@ -10,6 +11,7 @@ import {
   showLoadingKnownIssue,
   showLoadingBug
 } from "../errors.js";
+
 import {
   choose_single_sheet,
   organize_fields,
@@ -149,13 +151,6 @@ async function process(id, firstStep) {
     }]
   };
 
-  // TODO: Test no gapi, gapi.client, gapi.auth2
-  // TODO: Test choose_single_sheet
-  // TODO: Test organize_fields
-  // TODO: Test match_header_to_fields
-  // TODO: Test load_designs
-  // TODO: Test render_visualizations
-
   // Part 1 --------------------------------------
 
   // Authenticating
@@ -199,6 +194,7 @@ async function process(id, firstStep) {
     }
   } catch (error) {
     showBug(STEP_CHOOSE_SHEET, error);
+    return;
   }
   load_part1_bar.style.width = 50 + "%";
 
@@ -231,7 +227,7 @@ async function process(id, firstStep) {
       return;
     }
   } catch (error) {
-    showIssue(STEP_ORGANIZE_FIELDS, error);
+    showBug(STEP_ORGANIZE_FIELDS, error);
     return;
   }
   try {
@@ -241,7 +237,7 @@ async function process(id, firstStep) {
       return;
     }
   } catch (error) {
-    showIssue(STEP_MATCH_FIELDS, error);
+    showBug(STEP_MATCH_FIELDS, error);
     return;
   }
   load_part1_bar.style.width = 100 + "%";
@@ -254,7 +250,7 @@ async function process(id, firstStep) {
       desc: load_part2_desc
     });
   } catch (error) {
-    showLoadingIssue(STEP_CHOOSE_VISUALIZATIONS, error);
+    showIssue(STEP_CHOOSE_VISUALIZATIONS, error);
     return;
   }
 
@@ -276,7 +272,7 @@ async function process(id, firstStep) {
       desc: load_part3_desc
     });
   } catch (error) {
-    showLoadingIssue(STEP_MAKE_VISUALIZATIONS, error);
+    showIssue(STEP_MAKE_VISUALIZATIONS, error);
     return;
   }
 
