@@ -1,6 +1,8 @@
 // Imports ------------------------------------
 
 import { makeSpreadsheetUrl, getGoogleApi } from "../google.js";
+import { setupDropdowns } from "../dropdowns.js";
+import { setupModals } from "../modals.js";
 
 import {
   ISSUE_SPREADSHEET_ACCESS,
@@ -42,6 +44,40 @@ var authorize_message = document.getElementById("authorize-container"),
 
 // Contains the report
 var report = document.getElementById("report");
+
+// Setup the modals ---------------------------
+
+setupModals([
+  {
+    button: document.getElementById("saved-reports-button"),
+    container: document.getElementById("saved-reports-popup"),
+    popup: document.getElementById("saved-reports-popup").querySelector(".popup"),
+    close: document.getElementById("saved-reports-popup").querySelector(".popup-close")
+  },
+  {
+    button: document.getElementById("settings-button"),
+    container: document.getElementById("settings-popup"),
+    popup: document.getElementById("settings-popup").querySelector(".popup"),
+    close: document.getElementById("settings-popup").querySelector(".popup-close")
+  }
+]);
+
+// Setup the drop downs -----------------------
+
+setupDropdowns([
+  {
+    button: document.getElementById("use-case-button"),
+    menu: document.getElementById("use-case-menu")
+  },
+  {
+    button: document.getElementById("template-button"),
+    menu: document.getElementById("template-menu")
+  },
+  {
+    button: document.getElementById("save-button"),
+    menu: document.getElementById("save-menu")
+  }
+]);
 
 // Request channels ---------------------------
 

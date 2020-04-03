@@ -12,8 +12,45 @@ layout: default
 
     <div class="plot-top-options">
       <div id="plot-back-button" class="top-option invisible">&#8592; Back to Report</div>
-      <div class="top-option">Saved Reports</div>
-      <div class="top-option">Settings</div>
+
+      <div class="top-option">
+        <div id="saved-reports-button">
+          Saved Reports
+        </div>
+        <div id="saved-reports-popup" class="popup-container hidden">
+          <div class="popup">
+            <div class="popup-content">
+              <div class="popup-content-header">Saved Reports <span class="popup-small-desc">Not yet implemented</span></div>
+              <p>Saved Reports will be a page that shows the reports you saved to your Google Drive. A report contains all of the graphics and text you see when you visualize a spreadsheet. You'll be able to:</p>
+              <ul>
+                <li>Avoid remaking spreadsheet graphics</li>
+                <li>Open and edit older graphics</li>
+                <li>Link to reports in websites, Google Docs, and PDFs</li>
+              </ul>
+            </div>
+            <div class="popup-close">&#9587;</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="top-option">
+        <div id="settings-button">
+          Settings
+        </div>
+        <div id="settings-popup" class="popup-container hidden">
+          <div class="popup">
+            <div class="popup-content">
+              <div class="popup-content-header">Settings <span class="popup-small-desc">Not yet implemented</span></div>
+              <p>Settings will be a page that allows you to link and unlink your Google account. By linking your Google account you'll be able to visualize your private Google spreadsheets and save graphics to your Google Drive. You'll also be able to:</p>
+              <ul>
+                <li>Learn how your data is kept private</li>
+                <li>Enable access to Google Docs and Slides</li>
+              </ul>
+            </div>
+            <div class="popup-close">&#9587;</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -32,10 +69,65 @@ layout: default
         <div id="plot-title" class="plot-title"></div>
       </div>
       <div class="plot-spreadsheet-header-options">
-        <div id="edit-button" class="plot-spreadsheet-option">Edit visualization</div>
-        <div id="download-button" class="plot-spreadsheet-option">Download image</div>
-        <div id="copy-button" class="plot-spreadsheet-option">Copy image</div>
-        <div id="save-button" class="plot-spreadsheet-option">Save to Google Drive</div>
+        <!-- Customize option -->
+        <div class="dropdown">
+          <div id="customize-button" class="plot-spreadsheet-option dd-button">
+            Customize
+          </div>
+          <div id="customize-menu" class="dd-menu invisible">
+            <div class="dd-menu-div">
+              <div class="dd-menu-header">
+                Customize <span class="dd-menu-small-desc">Not yet implemented</span>
+              </div>
+              <div class="dd-menu-text dd-menu-text-lower">
+                This option will allow you to change the colors, labels, and scales of this graphic. You'll also be able to highlight parts of it to focus attention or make a point.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Download option -->
+        <div class="dropdown">
+          <div id="download-button" class="plot-spreadsheet-option dd-button">
+            Download image
+          </div>
+          <ul id="download-menu" class="dd-menu invisible">
+            <li id="download-svg" class="enable-dd-menu-item">
+              <div class="dd-menu-header">
+                Download SVG <span class="dd-menu-text-desc">(Infinite resolution)</span>
+              </div>
+              <div class="dd-menu-text">
+                Doesn't work with all apps. Best for the web and print publishing.
+              </div>
+            </li>
+            <li style="padding-top: 0; padding-bottom: 0;"><div class="dd-menu-border-bottom"/></li>
+            <li id="download-png" class="enable-dd-menu-item">
+              <div class="dd-menu-header">
+                Download PNG <span class="dd-menu-text-desc">(Medium resolution)</span>
+              </div>
+              <div class="dd-menu-text">
+                Best for slides, docs, and most apps.
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Save option -->
+        <div class="dropdown">
+          <div id="save-button" class="plot-spreadsheet-option dd-button">
+            Save to Google Drive
+          </div>
+          <div id="save-menu" class="dd-menu invisible">
+            <div class="dd-menu-div">
+              <div class="dd-menu-header">
+                Save to Google Drive <span class="dd-menu-small-desc">Not yet implemented</span>
+              </div>
+              <div class="dd-menu-text dd-menu-text-lower">
+                This option will allow you to save this graphic to your Google Drive. That makes it easy to use in your Google Slides and Docs.
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
     <div id="actual-plot" class="actual-plot"></div>

@@ -3350,6 +3350,178 @@
 	  });
 	} // Helper functions, no API needed
 
+	function hideAll(dropdowns) {
+	  dropdowns.forEach(function (d) {
+	    d.menu.classList.add("invisible");
+	    d.button.classList.remove("dd-button-highlight");
+	  });
+	}
+
+	function hideOnClickOutside(menu, button) {
+	  function outsideClickListener(event) {
+	    var hidden = menu.classList.contains("invisible");
+
+	    if (!hidden && !menu.contains(event.target)) {
+	      menu.classList.add("invisible");
+	      button.classList.remove("dd-button-highlight");
+	      document.removeEventListener('click', outsideClickListener);
+	    }
+	  }
+
+	  document.addEventListener('click', outsideClickListener);
+	}
+
+	function setup_dropdown(dropdowns, button, menu) {
+	  var button_width = button.offsetWidth + 8,
+	      menu_width = menu.offsetWidth;
+	  menu.style.left = button_width - menu_width + "px";
+	  button.addEventListener('click', function (event) {
+	    if (menu.classList.contains("invisible")) {
+	      hideAll(dropdowns);
+	      button.classList.add("dd-button-highlight");
+	      menu.classList.remove("invisible");
+	      event.stopPropagation();
+	      hideOnClickOutside(menu, button);
+	    } else {
+	      menu.classList.add("invisible");
+	      button.classList.remove("dd-button-highlight");
+	    }
+	  });
+	}
+
+	function setup_dropdowns(dropdowns) {
+	  dropdowns.forEach(function (d) {
+	    setup_dropdown(dropdowns, d.button, d.menu);
+	  });
+	}
+
+	function hideOnClickOutside$1(container, popup) {
+	  function outsideClickListener(event) {
+	    var hidden = container.classList.contains("hidden");
+
+	    if (!hidden && !popup.contains(event.target)) {
+	      container.classList.add("hidden");
+	      document.removeEventListener('click', outsideClickListener);
+	    }
+	  }
+
+	  document.addEventListener('click', outsideClickListener);
+	}
+
+	function setup_modal(button, container, popup, close) {
+	  button.addEventListener('click', function (event) {
+	    container.classList.remove("hidden");
+	    event.stopPropagation();
+	    hideOnClickOutside$1(container, popup);
+	  });
+	  close.addEventListener('click', function (event) {
+	    container.classList.add("hidden");
+	  });
+	}
+
+	function setup_modals(modals) {
+	  modals.forEach(function (m) {
+	    setup_modal(m.button, m.container, m.popup, m.close);
+	  });
+	}
+
+	window.URL = window.URL || window.webkitURL;
+	var doctype = '<?xml version="1.0" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">';
+
+	function svgToString(svg) {
+	  svg.setAttribute("version", "1.1");
+	  svg.removeAttribute("xmlns");
+	  svg.removeAttribute("xlink");
+
+	  if (!svg.hasAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns")) {
+	    svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns", "http://www.w3.org/2000/svg");
+	  }
+
+	  if (!svg.hasAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink")) {
+	    svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
+	  }
+
+	  return new XMLSerializer().serializeToString(svg);
+	}
+
+	function svgDimensions(svg) {
+	  var dimensions = svg.getAttribute("viewBox").split(",").map(function (v) {
+	    return parseInt(v, 10);
+	  });
+	  var width = dimensions[2],
+	      height = dimensions[3];
+
+	  if (width > height) {
+	    var _width = 1800;
+	    height = 1800 * (height / width);
+	    width = _width;
+	  } else {
+	    var _height = 1800;
+	    width = 1800 * (width / height);
+	    height = _height;
+	  }
+
+	  return {
+	    width: width,
+	    height: height
+	  };
+	}
+
+	function nowToString() {
+	  var now = new Date();
+	  var day = now.getUTCFullYear() + "-" + now.getUTCMonth() + "-" + now.getUTCDay(),
+	      time = now.getUTCHours() + "-" + now.getUTCMinutes() + "-" + now.getUTCSeconds();
+	  return day + "T" + time;
+	}
+
+	function download_svg(svg, name) {
+	  return new Promise(function (resolve, reject) {
+	    var source = svgToString(svg);
+	    var url = window.URL.createObjectURL(new Blob([doctype + source], {
+	      "type": "text/xml"
+	    }));
+	    var a = document.createElement("a");
+	    a.download = name + "-" + nowToString() + ".svg";
+	    a.href = url;
+	    a.click();
+	    URL.revokeObjectURL(url);
+	    resolve();
+	  });
+	}
+
+	function download_png(svg, name) {
+	  return new Promise(function (resolve, reject) {
+	    var canvas = document.createElement("canvas"),
+	        context = canvas.getContext("2d");
+	    var dimensions = svgDimensions(svg);
+	    canvas.width = dimensions.width;
+	    canvas.height = dimensions.height;
+	    var source = svgToString(svg);
+	    var blob = new Blob([doctype + source], {
+	      type: 'image/svg+xml;charset=utf-8'
+	    });
+	    var url = window.URL.createObjectURL(blob);
+	    var image = new Image();
+
+	    image.onerror = function () {
+	      reject(new Error("Image failed to load"));
+	    };
+
+	    image.onload = function () {
+	      context.drawImage(image, 0, 0);
+	      var dataURL = canvas.toDataURL("image/png");
+	      var a = document.createElement("a");
+	      a.download = name + "-" + nowToString() + ".png";
+	      a.href = dataURL;
+	      a.click();
+	      URL.revokeObjectURL(url);
+	      resolve();
+	    };
+
+	    image.src = url;
+	  });
+	}
+
 	function iteration_data_xy(i, fields, data) {
 	  var x = fields.get(i.x),
 	      y = fields.get(i.y);
@@ -3507,7 +3679,41 @@
 	    sheet = qvars.get("sheet"),
 	    plot_number = qvars.get("pn"),
 	    visualization = qvars.get("v");
-	console.log("[spreadsheet " + id$1 + "]", "[sheet " + sheet + "]", "[plot number " + plot_number + "]", "[visualization " + visualization + "]"); // Implement back button ------------------------
+	console.log("[spreadsheet " + id$1 + "]", "[sheet " + sheet + "]", "[plot number " + plot_number + "]", "[visualization " + visualization + "]"); // Setup the modals ---------------------------
+
+	setup_modals([{
+	  button: document.getElementById("saved-reports-button"),
+	  container: document.getElementById("saved-reports-popup"),
+	  popup: document.getElementById("saved-reports-popup").querySelector(".popup"),
+	  close: document.getElementById("saved-reports-popup").querySelector(".popup-close")
+	}, {
+	  button: document.getElementById("settings-button"),
+	  container: document.getElementById("settings-popup"),
+	  popup: document.getElementById("settings-popup").querySelector(".popup"),
+	  close: document.getElementById("settings-popup").querySelector(".popup-close")
+	}]); // Setup the drop downs -----------------------
+
+	setup_dropdowns([{
+	  button: document.getElementById("customize-button"),
+	  menu: document.getElementById("customize-menu")
+	}, {
+	  button: document.getElementById("download-button"),
+	  menu: document.getElementById("download-menu")
+	}, {
+	  button: document.getElementById("save-button"),
+	  menu: document.getElementById("save-menu")
+	}]); // Setup the download buttons -------------------
+
+	var download_svg_button = document.getElementById("download-svg"),
+	    download_png_button = document.getElementById("download-png");
+	download_svg_button.addEventListener('click', function (event) {
+	  var svg = actual_plot.querySelector("svg");
+	  download_svg(svg, visualization);
+	});
+	download_png_button.addEventListener('click', function (event) {
+	  var svg = actual_plot.querySelector("svg");
+	  download_png(svg, visualization);
+	}); // Implement back button ------------------------
 
 	back_button.onclick = function (event) {
 	  // Go to the report page

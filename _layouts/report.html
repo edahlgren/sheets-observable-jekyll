@@ -5,15 +5,51 @@ layout: default
 {% assign relative_url = site.url | append: site.baseurl %}
 
 <div id="report-container" class="report-container">
-
   <div class="report-header">
     <div id="report-new-button" class="report-new-button">
       <a href="/" target="_blank" class="report-new-text">New Spreadsheet</a>
     </div>
 
     <div class="report-top-options">
-      <div class="top-option">Saved Reports</div>
-      <div class="top-option">Settings</div>
+      <div class="top-option">
+        <div id="saved-reports-button">
+          Saved Reports
+        </div>
+        <div id="saved-reports-popup" class="popup-container hidden">
+          <div class="popup">
+            <div class="popup-content">
+              <div class="popup-content-header">Saved Reports <span class="popup-small-desc">Not yet implemented</span></div>
+              <p>Saved Reports will be a page that shows the reports you saved to your Google Drive. A report contains all of the graphics and text you see when you visualize a spreadsheet. You'll be able to:</p>
+              <ul>
+                <li>Avoid remaking spreadsheet graphics</li>
+                <li>Open and edit older graphics</li>
+                <li>Link to reports in websites, Google Docs, and PDFs</li>
+              </ul>
+            </div>
+            <div class="popup-close">&#9587;</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="top-option">
+        <div id="settings-button">
+          Settings
+        </div>
+        <div id="settings-popup" class="popup-container hidden">
+          <div class="popup">
+            <div class="popup-content">
+              <div class="popup-content-header">Settings <span class="popup-small-desc">Not yet implemented</span></div>
+              <p>Settings will be a page that allows you to link and unlink your Google account. By linking your Google account you'll be able to visualize your private Google spreadsheets and save graphics to your Google Drive. You'll also be able to:</p>
+              <ul>
+                <li>Learn how your data is kept private</li>
+                <li>Enable access to Google Docs and Slides</li>
+              </ul>
+            </div>
+            <div class="popup-close">&#9587;</div>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -31,13 +67,75 @@ layout: default
           View spreadsheet <img src="/assets/images/expand.png" />
         </a>
         <div id="report-spreadsheet-title" class="report-spreadsheet-title"></div>
-        <div id="report-help" class="report-help">
-          Click on one of the visualizations in this report to see it up close, learn what it means, download it, or save it to your Google Drive.
-        </div>
       </div>
-      <div>
-        <div class="report-spreadsheet-header-save-message">
-          <span id="save-this-report" class="save-this-report">Save this report</span> to your Google Drive so you can quickly access it again.
+      <div class="report-spreadsheet-header-options">
+        <!-- Change use case option -->
+        <div class="dropdown">
+          <div id="use-case-button" class="report-spreadsheet-option dd-button">
+            Change use case <span class="thin-text">(Document)</span>
+          </div>
+          <ul id="use-case-menu" class="dd-menu invisible">
+            <li id="document-use-case" class="enable-dd-menu-item">
+              <div class="dd-menu-header">
+                Document <span class="dd-menu-text-desc">(Enabled)</span>
+              </div>
+              <div class="dd-menu-text">
+                Graphics are designed for a document or report, like a Google Doc, print magazine article, scientific paper, or any PDF.
+              </div>
+            </li>
+            <li style="padding-top: 0; padding-bottom: 0;"><div class="dd-menu-border-bottom"/></li>
+            <li id="slides-use-case" class="disable-dd-menu-item">
+              <div class="dd-menu-header">
+                Slides <span class="dd-menu-small-desc">Not yet implemented</span>
+              </div>
+              <div class="dd-menu-text">
+                Graphics are designed for a slide show presentation. They're designed to be viewed on a larger screen but from a distance.
+              </div>
+            </li>
+            <li style="padding-top: 0; padding-bottom: 0;"><div class="dd-menu-border-bottom"/></li>
+            <li id="website-use-case" class="disable-dd-menu-item">
+              <div class="dd-menu-header">
+                Website <span class="dd-menu-small-desc">Not yet implemented</span>
+              </div>
+              <div class="dd-menu-text">
+                Graphics are designed for the web, like a blog, digital magazine, or web application. They're designed for desktop viewing and interaction.
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Template option -->
+        <div class="dropdown">
+          <div id="template-button" class="report-spreadsheet-option dd-button">
+            Make a template
+          </div>
+          <div id="template-menu" class="dd-menu invisible">
+            <div class="dd-menu-div">
+              <div class="dd-menu-header">
+                Make a template <span class="dd-menu-small-desc">Not yet implemented</span>
+              </div>
+              <div class="dd-menu-text dd-menu-text-lower">
+                This option will allow you to render only your favorite graphics from this report. This can speed things up considerably once you know what like.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Save option -->
+        <div class="dropdown">
+          <div id="save-button" class="report-spreadsheet-option dd-button">
+            Save to Google Drive
+          </div>
+          <div id="save-menu" class="dd-menu invisible">
+            <div class="dd-menu-div">
+              <div class="dd-menu-header">
+                Save to Google Drive <span class="dd-menu-small-desc">Not yet implemented</span>
+              </div>
+              <div class="dd-menu-text dd-menu-text-lower">
+                This option will allow you to save this report to your Google Drive. You won't need to remake all of these graphics when you want to access this report again.
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -1,6 +1,10 @@
 // Imports -------------------------------------
 
 import { getGoogleApi } from "../google.js";
+import { setupDropdowns } from "../dropdowns.js";
+import { setupModals } from "../modals.js";
+import { downloadSVG, downloadPNG } from "../download.js";
+
 import loadScript from "../loadScript.js";
 import visualizations from "../visualizations.js";
 
@@ -76,6 +80,55 @@ console.log("[spreadsheet " + id + "]",
             "[sheet " + sheet + "]",
             "[plot number " + plot_number + "]",
             "[visualization " + visualization + "]");
+
+// Setup the modals ---------------------------
+
+setupModals([
+  {
+    button: document.getElementById("saved-reports-button"),
+    container: document.getElementById("saved-reports-popup"),
+    popup: document.getElementById("saved-reports-popup").querySelector(".popup"),
+    close: document.getElementById("saved-reports-popup").querySelector(".popup-close")
+  },
+  {
+    button: document.getElementById("settings-button"),
+    container: document.getElementById("settings-popup"),
+    popup: document.getElementById("settings-popup").querySelector(".popup"),
+    close: document.getElementById("settings-popup").querySelector(".popup-close")
+  }
+]);
+
+// Setup the drop downs -----------------------
+
+setupDropdowns([
+  {
+    button: document.getElementById("customize-button"),
+    menu: document.getElementById("customize-menu")
+  },
+  {
+    button: document.getElementById("download-button"),
+    menu: document.getElementById("download-menu")
+  },
+  {
+    button: document.getElementById("save-button"),
+    menu: document.getElementById("save-menu")
+  }
+]);
+
+// Setup the download buttons -------------------
+
+var download_svg_button = document.getElementById("download-svg"),
+    download_png_button = document.getElementById("download-png");
+
+download_svg_button.addEventListener('click', function(event) {
+  var svg = actual_plot.querySelector("svg");
+  downloadSVG(svg, visualization);
+});
+
+download_png_button.addEventListener('click', function(event) {
+  var svg = actual_plot.querySelector("svg");
+  downloadPNG(svg, visualization);
+});
 
 // Implement back button ------------------------
 

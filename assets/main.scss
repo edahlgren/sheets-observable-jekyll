@@ -333,6 +333,111 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   color: #505961;
 }
 
+.dropdown {
+  position: relative;
+}
+
+.dd-button {
+  padding-left: 0.5rem;
+  width: 100%;
+}
+
+.dd-button-highlight {
+  background-color: #f6f6f6;
+}
+
+.dd-menu {
+  position: absolute;
+  z-index: 1;
+
+  width: 325px;
+  top: 100%;
+
+  padding: 0;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  margin: 0;
+
+  box-shadow: 0 0 6px 0 rgba(0,0,0,0.1);
+  background-color: #ffffff;
+  list-style-type: none;
+}
+
+.dd-menu-border-bottom {
+  border-bottom: 1px solid #f2f2f2;
+}
+
+.enable-dd-menu-item{
+  padding: 14px 20px;
+  cursor: pointer;
+}
+
+.enable-dd-menu-item:hover {
+  background-color: #f6f6f6;
+}
+
+.disable-dd-menu-item {
+  padding: 14px 20px;
+  cursor: default;
+}
+
+.disable-dd-menu-item:hover {
+  background-color: #ffffff;
+}
+
+.dd-menu-header {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 2;
+  letter-spacing: 1px;
+  color: #000000;
+}
+
+.dd-menu-text-desc {
+  margin-left: 4px;
+  font-weight: 300;
+}
+
+.dd-menu-text {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  line-height: 1.6;
+  letter-spacing: 1px;
+
+  color: #707070;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.dd-menu-div {
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+  margin-left: 1.5rem;
+  margin-right: 1.5rem;
+
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  line-height: 1.5;
+  letter-spacing: 1px;
+}
+
+.dd-menu-small-desc {
+  display: inline-block;
+  margin-left: 8px;
+
+  font-size: 10px;
+  font-weight: 400;
+  color: #45a1cc;
+  text-transform: uppercase;
+}
+
+.dd-menu-text-lower {
+  margin-top: 8px;
+}
+
 .processing {
   margin-top: 8rem;
   margin-bottom: 12rem;
@@ -401,10 +506,12 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
 .report-spreadsheet-header {
   display: flex;
   justify-content: space-between;
+  margin-bottom: 2rem;
 }
 
 .report-spreadsheet-header-title {
-  width: 50%;
+  width: fit-content;
+  max-width: 75%;
 }
 
 .report-help {
@@ -416,36 +523,6 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   width: 80%;
   margin-top: 2rem;
   margin-bottom: 1rem;
-}
-
-.report-spreadsheet-header-save-message {
-  width: 50%;
-  margin-left: auto;
-  padding-top: 1rem;
-  padding-bottom: 1rem;
-  padding-left: 1.5rem;
-  padding-right: 1.5rem;
-  border: 1px dashed #e6e6e6;
-
-  color: #aaaaaa;
-  font-family: 'Source Sans Pro', sans-serif;
-  font-size: 13px;
-  font-weight: 300;
-  font-style: italic;
-  line-height: 1.5;
-  letter-spacing: .5px;
-}
-
-.save-this-report {
-  font-family: 'Cerebri Regular', sans-serif;
-  font-weight: 400;
-  font-style: normal;
-  color: #7eaebd;
-  cursor: pointer;
-}
-
-.save-this-report:hover {
-  color: #68929e;
 }
 
 .report-spreadsheet-title {
@@ -472,8 +549,24 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   width: 9px;
 }
 
+.report-spreadsheet-header-options {
+  width: fit-content;
+  border-left: 1px solid #e3e3e3;
+}
+
+.report-spreadsheet-option {
+  margin-left: 0.5rem;
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 1px;
+  color: #666666;
+  cursor: pointer;
+}
+
 .report-plots-container {
-  margin-top: 4rem;
+  margin-top: 6rem;
   margin-bottom: 4rem;
   display: flex;
   justify-content: start;
@@ -639,7 +732,7 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
 }
 
 .plot-spreadsheet-option {
-  margin-left: 1rem;
+  margin-left: 0.5rem;
   font-family: 'Source Sans Pro', sans-serif;
   font-size: 13px;
   font-weight: 400;
@@ -660,6 +753,80 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
 .plot-selected-data {
 }
 
+.popup-container {
+  display: flex;
+  background: rgba(0, 0, 0, 0.2);
+
+  position: fixed;
+  z-index: 2;
+
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.popup {
+  width: 90%;
+  max-width: 700px;
+  height: 90%;
+  max-height: 600px;
+
+  margin-top: 10rem;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: auto;
+
+  padding-left: 2rem;
+  padding-right: 2rem;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+
+  position: relative;
+  background: #ffffff;
+  box-shadow: 0 8.1px 7px rgba(0, 0, 0, 0.02);
+
+  display: flex;
+  justify-content: space-between;
+}
+
+.popup-content {
+  margin-top: 1rem;
+  margin-left: 1rem;
+  margin-right: 10rem;
+
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 1.5;
+  letter-spacing: 1.2px;
+}
+
+.popup-content-header {
+  font-size: 16px;
+  font-weight: 400;
+  margin-bottom: 2rem;
+}
+
+.popup-small-desc {
+  display: inline-block;
+  margin-left: 12px;
+
+  font-size: 12px;
+  font-weight: 400;
+  color: #6391a6;
+  text-transform: uppercase;
+}
+
+.popup-close {
+  color: #666666;
+  width: fit-content;
+  margin-left: auto;
+  font-size: 10px;
+  margin-bottom: 1rem;
+  cursor: pointer;
+}
+
 .mt-0\.5 {
   margin-top: 0.5rem;
 }
@@ -670,4 +837,14 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
 
 .invisible {
   visibility: hidden;
+}
+
+.default-cursor {
+  cursor: default;
+}
+
+.thin-text {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 13px;
+  font-weight: 300;
 }
