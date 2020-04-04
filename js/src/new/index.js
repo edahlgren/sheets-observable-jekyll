@@ -1,42 +1,28 @@
+// Imports ------------------------------------
+
 import { parseSpreadsheetUrl } from '../google.js';
+import { setupTopNav } from "../top-nav.js";
 
-// Submit spreadsheet url button
-var spreadsheet_submit = document.getElementById("submit-spreadsheet"),
-    spreadsheet_input = document.getElementById("spreadsheet-url");
+// DOM ----------------------------------------
 
-var general_help = document.getElementById("general-help"),
-    url_issue = document.getElementById("url-issue");
+var samples = document.getElementsByClassName("sample");
 
-var allowed_spreadsheet_urls = new Set();
-var examples = document.getElementsByClassName("spreadsheet-example");
+// Setup the top nav bar ----------------------
 
-// Setup buttons and urls for each example
-for (var i = 0; i < examples.length; i++) {
-  var example = examples.item(i);
-  allowed_spreadsheet_urls.add(example.dataset.url);
+setupTopNav();
 
-  var choose = example.querySelector(".spreadsheet-example-choose");
-  choose.onclick = function(event) {
-    spreadsheet_input.value = example.dataset.url;
+// Setup samples ------------------------------
+
+for (var i = 0; i < samples.length; i++) {
+  var sample = samples.item(i),
+      url = sample.dataset.url;
+
+  var submit = sample.querySelector(".submit-spreadsheet");
+  submit.onclick = function(event) {
+    var id = parseSpreadsheetUrl(url);
+    window.location.href = "report?id=" + id;
   };
-}
 
-// Handle submitting the spreadsheet
-spreadsheet_submit.onclick = function(event) {
-  // Check for an allowed spreadsheet url
-  var url = spreadsheet_input.value;
-  if (!allowed_spreadsheet_urls.has(url)) {
-    return show_help();
-  }
-
-  // Parse the spreadsheet id from the url
-  var id = parseSpreadsheetUrl(url);
-
-  // Go to a page that will generate the report
-  window.location.href = "report?id=" + id;
-};
-
-function show_help() {
-  general_help.classList.add("hidden");
-  url_issue.classList.remove("hidden");
+  var view = sample.querySelector(".sample-logo");
+  view.href = url;
 }

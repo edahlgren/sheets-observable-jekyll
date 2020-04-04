@@ -3329,6 +3329,50 @@
 	  });
 	} // Helper functions, no API needed
 
+	function hideOnClickOutside(container, popup) {
+	  function outsideClickListener(event) {
+	    var hidden = container.classList.contains("hidden");
+
+	    if (!hidden && !popup.contains(event.target)) {
+	      container.classList.add("hidden");
+	      document.removeEventListener('click', outsideClickListener);
+	    }
+	  }
+
+	  document.addEventListener('click', outsideClickListener);
+	}
+
+	function setup_modal(button, container, popup, close) {
+	  button.addEventListener('click', function (event) {
+	    container.classList.remove("hidden");
+	    event.stopPropagation();
+	    hideOnClickOutside(container, popup);
+	  });
+	  close.addEventListener('click', function (event) {
+	    container.classList.add("hidden");
+	  });
+	}
+
+	function setup_modals(modals) {
+	  modals.forEach(function (m) {
+	    setup_modal(m.button, m.container, m.popup, m.close);
+	  });
+	}
+
+	function setup_top_nav() {
+	  setup_modals([{
+	    button: document.getElementById("saved-reports-button"),
+	    container: document.getElementById("saved-reports-popup"),
+	    popup: document.getElementById("saved-reports-popup").querySelector(".popup"),
+	    close: document.getElementById("saved-reports-popup").querySelector(".popup-close")
+	  }, {
+	    button: document.getElementById("settings-button"),
+	    container: document.getElementById("settings-popup"),
+	    popup: document.getElementById("settings-popup").querySelector(".popup"),
+	    close: document.getElementById("settings-popup").querySelector(".popup-close")
+	  }]);
+	}
+
 	function hideAll(dropdowns) {
 	  dropdowns.forEach(function (d) {
 	    d.menu.classList.add("invisible");
@@ -3336,7 +3380,7 @@
 	  });
 	}
 
-	function hideOnClickOutside(menu, button) {
+	function hideOnClickOutside$1(menu, button) {
 	  function outsideClickListener(event) {
 	    var hidden = menu.classList.contains("invisible");
 
@@ -3360,7 +3404,7 @@
 	      button.classList.add("dd-button-highlight");
 	      menu.classList.remove("invisible");
 	      event.stopPropagation();
-	      hideOnClickOutside(menu, button);
+	      hideOnClickOutside$1(menu, button);
 	    } else {
 	      menu.classList.add("invisible");
 	      button.classList.remove("dd-button-highlight");
@@ -3371,36 +3415,6 @@
 	function setup_dropdowns(dropdowns) {
 	  dropdowns.forEach(function (d) {
 	    setup_dropdown(dropdowns, d.button, d.menu);
-	  });
-	}
-
-	function hideOnClickOutside$1(container, popup) {
-	  function outsideClickListener(event) {
-	    var hidden = container.classList.contains("hidden");
-
-	    if (!hidden && !popup.contains(event.target)) {
-	      container.classList.add("hidden");
-	      document.removeEventListener('click', outsideClickListener);
-	    }
-	  }
-
-	  document.addEventListener('click', outsideClickListener);
-	}
-
-	function setup_modal(button, container, popup, close) {
-	  button.addEventListener('click', function (event) {
-	    container.classList.remove("hidden");
-	    event.stopPropagation();
-	    hideOnClickOutside$1(container, popup);
-	  });
-	  close.addEventListener('click', function (event) {
-	    container.classList.add("hidden");
-	  });
-	}
-
-	function setup_modals(modals) {
-	  modals.forEach(function (m) {
-	    setup_modal(m.button, m.container, m.popup, m.close);
 	  });
 	}
 
@@ -3977,11 +3991,12 @@
 	function plots_container() {
 	  var div = document.createElement("div");
 	  div.classList.add("report-plots-container");
+	  div.classList.add("wrapper-lg");
 	  return div;
 	}
 
 	function choose_n(num_iterations) {
-	  return 4;
+	  return 5;
 	}
 
 	function format_plot(plot_number, url, n, titles, svg) {
@@ -4026,19 +4041,9 @@
 	var authorize_message = document.getElementById("authorize-container"),
 	    signin_button = document.getElementById("signin"); // Contains the report
 
-	var report = document.getElementById("report"); // Setup the modals ---------------------------
+	var report = document.getElementById("report"); // Setup the top nav bar ----------------------
 
-	setup_modals([{
-	  button: document.getElementById("saved-reports-button"),
-	  container: document.getElementById("saved-reports-popup"),
-	  popup: document.getElementById("saved-reports-popup").querySelector(".popup"),
-	  close: document.getElementById("saved-reports-popup").querySelector(".popup-close")
-	}, {
-	  button: document.getElementById("settings-button"),
-	  container: document.getElementById("settings-popup"),
-	  popup: document.getElementById("settings-popup").querySelector(".popup"),
-	  close: document.getElementById("settings-popup").querySelector(".popup-close")
-	}]); // Setup the drop downs -----------------------
+	setup_top_nav(); // Setup the drop downs -----------------------
 
 	setup_dropdowns([{
 	  button: document.getElementById("use-case-button"),

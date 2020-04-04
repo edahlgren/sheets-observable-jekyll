@@ -18,13 +18,18 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
     src: url($baseurl + "/assets/fonts/CerebriSansPro-Regular.woff2") format("woff2");
 }
 
-.italic {
-  font-style: italic;
+*, *:before, *:after {
+  box-sizing: inherit;
 }
 
-.semi-bold {
-  font-weight: 400;
+body {
+  margin: 0;
+  padding: 0;
+  position: relative;
+  min-height: 100vh;
 }
+
+// Help messages
 
 .message-text {
   font-family: 'Source Sans Pro', sans-serif;
@@ -76,9 +81,6 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   color: #000000;
 }
 
-.issue-help {
-}
-
 .issue-contact {
   margin-top: 1.5rem;
 }
@@ -113,29 +115,258 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   color: inherit;
 }
 
+// Top nav
+
+.top-nav-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  width: 100%;
+  height: 60px;
+  margin-bottom: 64px;
+
+  background: #ffffff;
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.05);
+}
+
+.top-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  width: 100%;
+  max-width: 1192px;
+  margin-left: 64px;
+  margin-right: 64px;
+}
+
+.top-nav-logo {
+  font-family: 'DM Serif Text', serif;
+  font-size: 22px;
+  color: #000000;
+  text-decoration: none;
+}
+
+.demo-logo {
+  font-family: 'Cerebri Regula  r', sans-serif;
+  font-size: 10px;
+  letter-spacing: 1px;
+  font-weight: 400;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.3);
+
+  vertical-align: 50%;
+  margin-left: 4px;
+}
+
+.top-options {
+  display: flex;
+  align-items: center;
+}
+
+.top-option {
+  font-family: 'Cerebri Regular', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 2;
+  letter-spacing: 1px;
+  color: rgba(0, 0, 0, 0.6);
+
+  margin-left: 2em;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.top-option:hover {
+  color: rgba(0, 0, 0, 0.8);
+}
+
+.popup-container {
+  display: flex;
+  background: rgba(0, 0, 0, 0.2);
+
+  position: fixed;
+  z-index: 2;
+
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.popup {
+  width: 90%;
+  max-width: 700px;
+  height: 90%;
+  max-height: 600px;
+
+  margin-top: 10rem;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: auto;
+
+  padding-left: 2rem;
+  padding-right: 2rem;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+
+  position: relative;
+  background: #ffffff;
+  box-shadow: 0 8.1px 7px rgba(0, 0, 0, 0.02);
+
+  display: flex;
+  justify-content: space-between;
+}
+
+.popup-content {
+  margin-top: 1rem;
+  margin-left: 1rem;
+  margin-right: 10rem;
+
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 1.5;
+  letter-spacing: 1.2px;
+}
+
+.popup-content-header {
+  font-size: 16px;
+  font-weight: 400;
+  margin-bottom: 2rem;
+}
+
+.popup-small-desc {
+  display: inline-block;
+  margin-left: 12px;
+
+  font-size: 12px;
+  font-weight: 400;
+  color: #6391a6;
+  text-transform: uppercase;
+}
+
+.popup-close {
+  color: #666666;
+  width: fit-content;
+  margin-left: auto;
+  font-size: 10px;
+  margin-bottom: 1rem;
+  cursor: pointer;
+}
+
+// New page
+
 .new-container {
   width: 90%;
-  max-width: 750px;
-  margin-top: 2rem;
+  max-width: 800px;
+
+  margin-top: 6rem;
   margin-right: auto;
   margin-left: auto;
   margin-bottom: 24rem;
 }
 
-.new-submit-container {
-  margin-top: 10rem;
-}
-
-.new-submit-desc {
-  margin-bottom: 2rem;
+.hero-text {
   text-align: center;
   font-family: 'Cerebri Regular', sans-serif;
-  font-size: 20px;
+  font-size: 44px;
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: 1px;
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.hero-subtext {
+  text-align: center;
+  font-family: 'Cerebri Regular', sans-serif;
+  font-size: 28px;
   font-weight: 400;
   line-height: 2;
   letter-spacing: 1px;
-  color: #93a4ad;
+  color: rgba(0, 0, 0, 0.7);
+  margin-bottom: 6rem;
 }
+
+.hero-subtext img {
+  width: 22px;
+  margin-left: 8px;
+  margin-right: 8px;
+}
+
+.demo-text {
+  font-family: 'Cerebri Regular', sans-serif;
+  font-weight: 400;
+  font-size: 11px;
+  color: #7a99a3;
+  margin-right: 2rem;
+  text-transform: uppercase;
+}
+
+.samples {
+  margin-top: 2rem;
+}
+
+.sample {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  padding-left: 1.5rem;
+  padding-right: 0.5rem;
+}
+
+.sample-bordered {
+  border-bottom: 1px solid #e6e6e6;
+}
+
+.sample-description {
+  display: flex;
+  align-items: center;
+}
+
+.sample-title {
+  font-family: 'Cerebri Regular', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  letter-spacing: 1px;
+  color: rgba(0, 0, 0, 0.8);
+  padding-bottom: 2px;
+}
+
+.sample-logo {
+  height: 20px;
+  width: 20px;
+  margin-right: 1.5rem;
+  cursor: pointer;
+}
+
+.sample-logo svg {
+  width: 20px;
+}
+
+.submit-spreadsheet {
+  width: fit-content;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  margin-left: 16px;
+  margin-right: 16px;
+
+  font-family: 'Cerebri Regular', sans-serif;
+  font-size: 20px;
+  line-height: 1;
+  color: #a1bec9;
+  cursor: pointer;
+}
+
+.submit-spreadsheet:hover {
+  color: #5d8391;
+}
+
+
 
 .new-submit-bar {
   display: flex;
@@ -195,17 +426,21 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   color: #5d8391;
 }
 
+.spreadsheet-examples {
+  margin-top: 3rem;
+}
+
 .spreadsheet-example {
   display: flex;
   justify-content: space-between;
+  align-items: end;
 
-  padding-top: 1.5rem;
-  padding-bottom: 1.5rem;
-  padding-left: 2rem;
-  padding-right: 3rem;
-
+  width: 100%;
+  max-width: 450px;
   margin-left: auto;
   margin-right: auto;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
 }
 
 .spreadsheet-example-bordered {
@@ -213,14 +448,14 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
 }
 
 .spreadsheet-example-desc {
-  width: 60%;
+  width: 100%;
 }
 
 .spreadsheet-example-title {
   font-family: 'Cerebri Regular', sans-serif;
   font-size: 16px;
   font-weight: 400;
-  line-height: 2;
+  line-height: 1;
   letter-spacing: 1px;
   color: #000000;
 }
@@ -243,7 +478,7 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   padding-bottom: 8px;
   padding-left: 16px;
   padding-right: 16px;
-  margin-bottom: 0.5rem;
+  margin-top: 8px;
 
   background-color: #f0f5f7;
   color: #000000;
@@ -257,10 +492,10 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
 .spreadsheet-example-view {
   font-family: 'Source Sans Pro', sans-serif;
   font-size: 13px;
-  font-weight: 300;
+  font-weight: 400;
   line-height: 2;
   letter-spacing: 1px;
-  color: #999999;
+  color: rgba(0, 0, 0, 0.4);
   text-decoration: none;
 }
 
@@ -269,68 +504,24 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   width: 9px;
 }
 
+.spreadsheet-example-text {
+  margin-top: 1rem;
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 1px;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+// Report page
+
 .report-container {
   width: 90%;
   max-width: 900px;
   margin-right: auto;
   margin-left: auto;
   margin-bottom: 24rem;
-}
-
-.report-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.report-new-button {
-  display: flex;
-  align-items: center;
-}
-
-.report-new-text {
-  font-family: 'Cerebri Regular', sans-serif;
-  font-size: 12.5px;
-  font-weight: 400;
-  line-height: 2;
-  letter-spacing: .5px;
-
-  text-align: center;
-  padding-top: 8px;
-  padding-bottom: 8px;
-  padding-left: 16px;
-  padding-right: 16px;
-
-  background-color: #f0f5f7;
-  color: #454545;
-  text-decoration: none;
-}
-
-.report-new-text:hover {
-  background-color: #e9f0f2;
-}
-
-.report-top-options {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.top-option {
-  font-family: 'Cerebri Regular', sans-serif;
-  font-size: 13px;
-  font-weight: 400;
-  line-height: 2;
-  letter-spacing: 1px;
-  color: #7f8c99;
-  margin-left: 2rem;
-  cursor: pointer;
-}
-
-.top-option:hover {
-  color: #505961;
 }
 
 .dropdown {
@@ -529,7 +720,7 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   font-family: 'Cerebri Regular', sans-serif;
   font-size: 18px;
   font-weight: 400;
-  line-height: 1.5;
+  line-height: 1;
   letter-spacing: 1px;
   color: #000000;
 }
@@ -540,13 +731,8 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   font-weight: 400;
   line-height: 2;
   letter-spacing: 1.5px;
-  color: #aaaaaa;
+  color: rgba(0, 0, 0, 0.5);
   text-decoration: none;
-}
-
-.report-spreadsheet-url img {
-  margin-left: 3px;
-  width: 9px;
 }
 
 .report-spreadsheet-header-options {
@@ -566,7 +752,6 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
 }
 
 .report-plots-container {
-  margin-top: 6rem;
   margin-bottom: 4rem;
   display: flex;
   justify-content: start;
@@ -610,12 +795,38 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   text-decoration: none;
 }
 
-.plot-container {
+.page-container {
+  width: 100%;
+  margin-top: 6rem;
+  margin-bottom: 24rem;
+}
+
+.wrapper-sm {
   width: 90%;
-  max-width: 800px;
+  max-width: 680px;
   margin-right: auto;
   margin-left: auto;
-  margin-bottom: 24rem;
+}
+
+.wrapper-md {
+  width: 90%;
+  max-width: 900px;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.wrapper-lg {
+  width: 90%;
+  max-width: 1192px;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.wrapper-xlg {
+  width: 90%;
+  max-width: 1300px;
+  margin-right: auto;
+  margin-left: auto;
 }
 
 .plot-loader {
@@ -674,23 +885,6 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   margin-left: 4px;
 }
 
-.plot {
-}
-
-.plot-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 1.5rem;
-  margin-bottom: 5rem;
-}
-
-.plot-top-options {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
 .plot-spreadsheet-header {
   display: flex;
   justify-content: space-between;
@@ -708,20 +902,15 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   font-weight: 400;
   line-height: 2;
   letter-spacing: 1.5px;
-  color: #aaaaaa;
+  color: rgba(0, 0, 0, 0.5);
   text-decoration: none;
-}
-
-.plot-spreadsheet-url img {
-  margin-left: 4px;
-  width: 10px;
 }
 
 .plot-title {
   font-family: 'Cerebri Regular', sans-serif;
   font-size: 18px;
   font-weight: 400;
-  line-height: 1.5;
+  line-height: 1;
   letter-spacing: 1px;
   color: #000000;
 }
@@ -746,89 +935,44 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   color: #808080;
 }
 
+.general-paragraph-text {
+  font-family: 'Source Sans Pro', sans-serif;
+  font-size: 15px;
+  font-weight: 300;
+  line-height: 1.5;
+  letter-spacing: 1px;
+  color: rgba(0, 0, 0, 0.6);
+}
+
 .actual-plot {
   margin-bottom: 4rem;
 }
 
-.plot-selected-data {
+// Helpers
+
+.mt-4 {
+  margin-bottom: 4rem;
 }
 
-.popup-container {
-  display: flex;
-  background: rgba(0, 0, 0, 0.2);
-
-  position: fixed;
-  z-index: 2;
-
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.popup {
-  width: 90%;
-  max-width: 700px;
-  height: 90%;
-  max-height: 600px;
-
-  margin-top: 10rem;
-  margin-left: auto;
-  margin-right: auto;
-  margin-bottom: auto;
-
-  padding-left: 2rem;
-  padding-right: 2rem;
-  padding-top: 1.5rem;
-  padding-bottom: 1.5rem;
-
-  position: relative;
-  background: #ffffff;
-  box-shadow: 0 8.1px 7px rgba(0, 0, 0, 0.02);
-
-  display: flex;
-  justify-content: space-between;
-}
-
-.popup-content {
-  margin-top: 1rem;
-  margin-left: 1rem;
-  margin-right: 10rem;
-
-  font-family: 'Source Sans Pro', sans-serif;
-  font-size: 14px;
-  font-weight: 300;
-  line-height: 1.5;
-  letter-spacing: 1.2px;
-}
-
-.popup-content-header {
-  font-size: 16px;
-  font-weight: 400;
+.mb-2 {
   margin-bottom: 2rem;
 }
 
-.popup-small-desc {
-  display: inline-block;
-  margin-left: 12px;
-
-  font-size: 12px;
-  font-weight: 400;
-  color: #6391a6;
-  text-transform: uppercase;
+.mb-3 {
+  margin-bottom: 3rem;
 }
 
-.popup-close {
-  color: #666666;
-  width: fit-content;
-  margin-left: auto;
-  font-size: 10px;
-  margin-bottom: 1rem;
-  cursor: pointer;
+.mb-4 {
+  margin-bottom: 4rem;
 }
 
 .mt-0\.5 {
   margin-top: 0.5rem;
+}
+
+.flex-v-center {
+  display: flex;
+  align-items: center;
 }
 
 .hidden {
@@ -847,4 +991,12 @@ $baseurl: "{{ site.url | append: site.baseurl }}";
   font-family: 'Source Sans Pro', sans-serif;
   font-size: 13px;
   font-weight: 300;
+}
+
+.italic {
+  font-style: italic;
+}
+
+.semi-bold {
+  font-weight: 400;
 }

@@ -1,12 +1,11 @@
 // Imports -------------------------------------
-
-import { getGoogleApi } from "../google.js";
-import { setupDropdowns } from "../dropdowns.js";
-import { setupModals } from "../modals.js";
-import { downloadSVG, downloadPNG } from "../download.js";
-
 import loadScript from "../loadScript.js";
 import visualizations from "../visualizations.js";
+
+import { getGoogleApi } from "../google.js";
+import { setupTopNav } from "../top-nav.js";
+import { setupDropdowns } from "../dropdowns.js";
+import { downloadSVG, downloadPNG } from "../download.js";
 
 import {
   ERROR_CANT_GET_APP_FILE,
@@ -29,8 +28,7 @@ import {
 // DOM -----------------------------------------
 
 // Header buttons
-var top_left_options = document.getElementById("left-top-options"),
-    back_button = document.getElementById("plot-back-button");
+var top_left_options = document.getElementById("left-top-options");
 
 // Loading plot
 var processing = document.getElementById("plot-processing"),
@@ -81,22 +79,9 @@ console.log("[spreadsheet " + id + "]",
             "[plot number " + plot_number + "]",
             "[visualization " + visualization + "]");
 
-// Setup the modals ---------------------------
+// Setup the top nav bar ----------------------
 
-setupModals([
-  {
-    button: document.getElementById("saved-reports-button"),
-    container: document.getElementById("saved-reports-popup"),
-    popup: document.getElementById("saved-reports-popup").querySelector(".popup"),
-    close: document.getElementById("saved-reports-popup").querySelector(".popup-close")
-  },
-  {
-    button: document.getElementById("settings-button"),
-    container: document.getElementById("settings-popup"),
-    popup: document.getElementById("settings-popup").querySelector(".popup"),
-    close: document.getElementById("settings-popup").querySelector(".popup-close")
-  }
-]);
+setupTopNav();
 
 // Setup the drop downs -----------------------
 
@@ -132,10 +117,9 @@ download_png_button.addEventListener('click', function(event) {
 
 // Implement back button ------------------------
 
-back_button.onclick = function(event) {
-  // Go to the report page
-  window.location.href = "report?id=" + id;
-};
+//back_button.onclick = function(event) {
+//  window.location.href = "report?id=" + id;
+//};
 
 // Load the visualization from a tab ------------
 
@@ -193,7 +177,6 @@ function load_from_message(msg) {
   if (!id) {
     return showLoadingKnownIssue(ISSUE_URL_NO_SPREADSHEET_ID);
   }
-  back_button.classList.remove("invisible");
   plot.classList.remove("invisible");
 }
 
@@ -258,7 +241,6 @@ async function load_from_scratch() {
   if (!id) {
     return showLoadingKnownIssue(ISSUE_URL_NO_SPREADSHEET_ID);
   }
-  back_button.classList.remove("invisible");
 
   if (!sheet)
     return showLoadingKnownIssue(ISSUE_URL_NO_SPREADSHEET_SHEET);

@@ -1,8 +1,8 @@
 // Imports ------------------------------------
 
 import { makeSpreadsheetUrl, getGoogleApi } from "../google.js";
+import { setupTopNav } from "../top-nav.js";
 import { setupDropdowns } from "../dropdowns.js";
-import { setupModals } from "../modals.js";
 
 import {
   ISSUE_SPREADSHEET_ACCESS,
@@ -45,22 +45,9 @@ var authorize_message = document.getElementById("authorize-container"),
 // Contains the report
 var report = document.getElementById("report");
 
-// Setup the modals ---------------------------
+// Setup the top nav bar ----------------------
 
-setupModals([
-  {
-    button: document.getElementById("saved-reports-button"),
-    container: document.getElementById("saved-reports-popup"),
-    popup: document.getElementById("saved-reports-popup").querySelector(".popup"),
-    close: document.getElementById("saved-reports-popup").querySelector(".popup-close")
-  },
-  {
-    button: document.getElementById("settings-button"),
-    container: document.getElementById("settings-popup"),
-    popup: document.getElementById("settings-popup").querySelector(".popup"),
-    close: document.getElementById("settings-popup").querySelector(".popup-close")
-  }
-]);
+setupTopNav();
 
 // Setup the drop downs -----------------------
 

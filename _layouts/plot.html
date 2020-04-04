@@ -4,70 +4,25 @@ layout: default
 
 {% assign relative_url = site.url | append: site.baseurl %}
 
-<div id="plot-container" class="plot-container">
-  <div class="plot-header">
-    <div id="report-new-button" class="report-new-button">
-      <a href="/" target="_blank" class="report-new-text">New Spreadsheet</a>
-    </div>
+{%- include top-nav.html -%}
+<div id="plot-processing" class="processing hidden">
+  {%- include loading-plot.html -%}
+  {%- include link-google.html -%}
+  {%- include loading-issue.html -%}
+</div>
 
-    <div class="plot-top-options">
-      <div id="plot-back-button" class="top-option invisible">&#8592; Back to Report</div>
 
-      <div class="top-option">
-        <div id="saved-reports-button">
-          Saved Reports
-        </div>
-        <div id="saved-reports-popup" class="popup-container hidden">
-          <div class="popup">
-            <div class="popup-content">
-              <div class="popup-content-header">Saved Reports <span class="popup-small-desc">Not yet implemented</span></div>
-              <p>Saved Reports will be a page that shows the reports you saved to your Google Drive. A report contains all of the graphics and text you see when you visualize a spreadsheet. You'll be able to:</p>
-              <ul>
-                <li>Avoid remaking spreadsheet graphics</li>
-                <li>Open and edit older graphics</li>
-                <li>Link to reports in websites, Google Docs, and PDFs</li>
-              </ul>
-            </div>
-            <div class="popup-close">&#9587;</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="top-option">
-        <div id="settings-button">
-          Settings
-        </div>
-        <div id="settings-popup" class="popup-container hidden">
-          <div class="popup">
-            <div class="popup-content">
-              <div class="popup-content-header">Settings <span class="popup-small-desc">Not yet implemented</span></div>
-              <p>Settings will be a page that allows you to link and unlink your Google account. By linking your Google account you'll be able to visualize your private Google spreadsheets and save graphics to your Google Drive. You'll also be able to:</p>
-              <ul>
-                <li>Learn how your data is kept private</li>
-                <li>Enable access to Google Docs and Slides</li>
-              </ul>
-            </div>
-            <div class="popup-close">&#9587;</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div id="plot-processing" class="processing hidden">
-    {%- include loading-plot.html -%}
-    {%- include link-google.html -%}
-    {%- include loading-issue.html -%}
-  </div>
-
-  <div id="plot" class="plot invisible">
+<div id="plot" class="page-container invisible">
+  <!-- Plot title -->
+  <div class="wrapper-sm mb-4">
     <div class="plot-spreadsheet-header">
       <div class="plot-spreadsheet-header-title">
         <a id="plot-spreadsheet-url" class="plot-spreadsheet-url" target="_blank" rel="noopener noreferrer">
-          <span id="plot-spreadsheet-title"></span> <img src="/assets/images/expand.png" />
+          &#8592; <span id="plot-spreadsheet-title"></span>
         </a>
         <div id="plot-title" class="plot-title"></div>
       </div>
+
       <div class="plot-spreadsheet-header-options">
         <!-- Customize option -->
         <div class="dropdown">
@@ -130,6 +85,11 @@ layout: default
         </div>
       </div>
     </div>
+  </div>
+  <!-- End plot title -->
+
+  <!-- Actual plot -->
+  <div class="wrapper-md mb-4">
     <div id="actual-plot" class="actual-plot"></div>
   </div>
 </div>

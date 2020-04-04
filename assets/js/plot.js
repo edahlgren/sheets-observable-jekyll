@@ -3074,6 +3074,123 @@
 	  issue.classList.remove("hidden");
 	} // Export error codes
 
+	function iteration_data_xy(i, fields, data) {
+	  var x = fields.get(i.x),
+	      y = fields.get(i.y);
+	  var points = data.map(function (row) {
+	    return {
+	      x: +row[x.index],
+	      y: +row[y.index]
+	    };
+	  }).filter(function (p) {
+	    return p.x != 0 && p.y != 0;
+	  });
+	  return {
+	    points: points,
+	    x: x.description,
+	    y: y.description
+	  };
+	}
+
+	function iteration_titles_xy(i, fields) {
+	  return [fields.get(i.x).description + " \u2A2F", fields.get(i.y).description];
+	}
+
+	function make_query_vars_xy(i, fields) {
+	  return ["x=" + i.x, "xlabel=" + fields.get(i.x).description, "y=" + i.y, "ylabel=" + fields.get(i.y).description];
+	}
+
+	function parse_vars_xy(query_vars, header) {
+	  var x = query_vars.get("x"),
+	      y = query_vars.get("y"),
+	      x_desc = query_vars.get("xlabel"),
+	      y_desc = query_vars.get("ylabel");
+
+	  if (!x || !x_desc) {
+	    var error = new Error("Need query string variables 'x' and 'xlabel'");
+	    throw makeKnownError(ERROR_WITH_PLOT_URL, error);
+	  }
+
+	  if (!y || !y_desc) {
+	    var error = new Error("Need query string variables 'y' and 'ylabel'");
+	    throw makeKnownError(ERROR_WITH_PLOT_URL, error);
+	  }
+
+	  var x_index = -1,
+	      y_index = 1;
+
+	  for (var i = 0; i < header.length; i++) {
+	    if (header[i] === x) {
+	      x_index = i;
+	      continue;
+	    }
+
+	    if (header[i] === y) {
+	      y_index = i;
+	    }
+	  }
+
+	  if (x_index < 0 || y_index < 0) {
+	    var error = new Error("Query var not in header");
+	    throw makeKnownError(ERROR_PLOT_URL_DOESNT_MATCH_DATA, error);
+	  }
+
+	  return {
+	    x: x,
+	    x_index: x_index,
+	    x_desc: x_desc,
+	    y: y,
+	    y_index: y_index,
+	    y_desc: y_desc
+	  };
+	}
+
+	function plot_data_xy(vars, data) {
+	  var points = data.slice(1).map(function (row) {
+	    return {
+	      x: +row[vars.x_index],
+	      y: +row[vars.y_index]
+	    };
+	  }).filter(function (p) {
+	    return p.x != 0 && p.y != 0;
+	  });
+	  return {
+	    points: points,
+	    x: vars.x_desc,
+	    y: vars.y_desc
+	  };
+	}
+
+	function plot_title_xy(vars) {
+	  return vars.x_desc + " \u2A2F " + vars.y_desc;
+	}
+
+	var visualizations = {
+	  "basic-scatterplot": {
+	    // Position and data formats
+	    position: 1,
+	    dataFormats: ["combo:numerical-random"],
+	    // Script and render function
+	    script: "/assets/plots/basic-scatterplot.js",
+	    render: function render(data) {
+	      if (!window.basic_scatterplot) {
+	        throw makeKnownError(ERROR_APP_RESOURCE_DOESNT_EXIST, new Error("basic_scatterplot function isn't defined"));
+	      }
+
+	      return basic_scatterplot(data);
+	    },
+	    // Iterating through the report graphics
+	    iterationData: iteration_data_xy,
+	    iterationTitles: iteration_titles_xy,
+	    // Handling query vars for single plot
+	    makeQueryVars: make_query_vars_xy,
+	    parseQueryVars: parse_vars_xy,
+	    // Making the single plot
+	    plotData: plot_data_xy,
+	    plotTitle: plot_title_xy
+	  }
+	};
+
 	var clientId = '610692011464-m1oi9ddi7u31h92e09lg5s970luvak9a.apps.googleusercontent.com',
 	    apiKey = 'AIzaSyDCdKkMRyLWNjtTaUBYRcJFLqLEWEGDgg8',
 	    discoveryDocs = ["https://sheets.googleapis.com/$discovery/rest?version=v4"],
@@ -3350,6 +3467,50 @@
 	  });
 	} // Helper functions, no API needed
 
+	function hideOnClickOutside(container, popup) {
+	  function outsideClickListener(event) {
+	    var hidden = container.classList.contains("hidden");
+
+	    if (!hidden && !popup.contains(event.target)) {
+	      container.classList.add("hidden");
+	      document.removeEventListener('click', outsideClickListener);
+	    }
+	  }
+
+	  document.addEventListener('click', outsideClickListener);
+	}
+
+	function setup_modal(button, container, popup, close) {
+	  button.addEventListener('click', function (event) {
+	    container.classList.remove("hidden");
+	    event.stopPropagation();
+	    hideOnClickOutside(container, popup);
+	  });
+	  close.addEventListener('click', function (event) {
+	    container.classList.add("hidden");
+	  });
+	}
+
+	function setup_modals(modals) {
+	  modals.forEach(function (m) {
+	    setup_modal(m.button, m.container, m.popup, m.close);
+	  });
+	}
+
+	function setup_top_nav() {
+	  setup_modals([{
+	    button: document.getElementById("saved-reports-button"),
+	    container: document.getElementById("saved-reports-popup"),
+	    popup: document.getElementById("saved-reports-popup").querySelector(".popup"),
+	    close: document.getElementById("saved-reports-popup").querySelector(".popup-close")
+	  }, {
+	    button: document.getElementById("settings-button"),
+	    container: document.getElementById("settings-popup"),
+	    popup: document.getElementById("settings-popup").querySelector(".popup"),
+	    close: document.getElementById("settings-popup").querySelector(".popup-close")
+	  }]);
+	}
+
 	function hideAll(dropdowns) {
 	  dropdowns.forEach(function (d) {
 	    d.menu.classList.add("invisible");
@@ -3357,7 +3518,7 @@
 	  });
 	}
 
-	function hideOnClickOutside(menu, button) {
+	function hideOnClickOutside$1(menu, button) {
 	  function outsideClickListener(event) {
 	    var hidden = menu.classList.contains("invisible");
 
@@ -3381,7 +3542,7 @@
 	      button.classList.add("dd-button-highlight");
 	      menu.classList.remove("invisible");
 	      event.stopPropagation();
-	      hideOnClickOutside(menu, button);
+	      hideOnClickOutside$1(menu, button);
 	    } else {
 	      menu.classList.add("invisible");
 	      button.classList.remove("dd-button-highlight");
@@ -3392,36 +3553,6 @@
 	function setup_dropdowns(dropdowns) {
 	  dropdowns.forEach(function (d) {
 	    setup_dropdown(dropdowns, d.button, d.menu);
-	  });
-	}
-
-	function hideOnClickOutside$1(container, popup) {
-	  function outsideClickListener(event) {
-	    var hidden = container.classList.contains("hidden");
-
-	    if (!hidden && !popup.contains(event.target)) {
-	      container.classList.add("hidden");
-	      document.removeEventListener('click', outsideClickListener);
-	    }
-	  }
-
-	  document.addEventListener('click', outsideClickListener);
-	}
-
-	function setup_modal(button, container, popup, close) {
-	  button.addEventListener('click', function (event) {
-	    container.classList.remove("hidden");
-	    event.stopPropagation();
-	    hideOnClickOutside$1(container, popup);
-	  });
-	  close.addEventListener('click', function (event) {
-	    container.classList.add("hidden");
-	  });
-	}
-
-	function setup_modals(modals) {
-	  modals.forEach(function (m) {
-	    setup_modal(m.button, m.container, m.popup, m.close);
 	  });
 	}
 
@@ -3522,127 +3653,9 @@
 	  });
 	}
 
-	function iteration_data_xy(i, fields, data) {
-	  var x = fields.get(i.x),
-	      y = fields.get(i.y);
-	  var points = data.map(function (row) {
-	    return {
-	      x: +row[x.index],
-	      y: +row[y.index]
-	    };
-	  }).filter(function (p) {
-	    return p.x != 0 && p.y != 0;
-	  });
-	  return {
-	    points: points,
-	    x: x.description,
-	    y: y.description
-	  };
-	}
-
-	function iteration_titles_xy(i, fields) {
-	  return [fields.get(i.x).description + " \u2A2F", fields.get(i.y).description];
-	}
-
-	function make_query_vars_xy(i, fields) {
-	  return ["x=" + i.x, "xlabel=" + fields.get(i.x).description, "y=" + i.y, "ylabel=" + fields.get(i.y).description];
-	}
-
-	function parse_vars_xy(query_vars, header) {
-	  var x = query_vars.get("x"),
-	      y = query_vars.get("y"),
-	      x_desc = query_vars.get("xlabel"),
-	      y_desc = query_vars.get("ylabel");
-
-	  if (!x || !x_desc) {
-	    var error = new Error("Need query string variables 'x' and 'xlabel'");
-	    throw makeKnownError(ERROR_WITH_PLOT_URL, error);
-	  }
-
-	  if (!y || !y_desc) {
-	    var error = new Error("Need query string variables 'y' and 'ylabel'");
-	    throw makeKnownError(ERROR_WITH_PLOT_URL, error);
-	  }
-
-	  var x_index = -1,
-	      y_index = 1;
-
-	  for (var i = 0; i < header.length; i++) {
-	    if (header[i] === x) {
-	      x_index = i;
-	      continue;
-	    }
-
-	    if (header[i] === y) {
-	      y_index = i;
-	    }
-	  }
-
-	  if (x_index < 0 || y_index < 0) {
-	    var error = new Error("Query var not in header");
-	    throw makeKnownError(ERROR_PLOT_URL_DOESNT_MATCH_DATA, error);
-	  }
-
-	  return {
-	    x: x,
-	    x_index: x_index,
-	    x_desc: x_desc,
-	    y: y,
-	    y_index: y_index,
-	    y_desc: y_desc
-	  };
-	}
-
-	function plot_data_xy(vars, data) {
-	  var points = data.slice(1).map(function (row) {
-	    return {
-	      x: +row[vars.x_index],
-	      y: +row[vars.y_index]
-	    };
-	  }).filter(function (p) {
-	    return p.x != 0 && p.y != 0;
-	  });
-	  return {
-	    points: points,
-	    x: vars.x_desc,
-	    y: vars.y_desc
-	  };
-	}
-
-	function plot_title_xy(vars) {
-	  return vars.x_desc + " \u2A2F " + vars.y_desc;
-	}
-
-	var visualizations = {
-	  "basic-scatterplot": {
-	    // Position and data formats
-	    position: 1,
-	    dataFormats: ["combo:numerical-random"],
-	    // Script and render function
-	    script: "/assets/plots/basic-scatterplot.js",
-	    render: function render(data) {
-	      if (!window.basic_scatterplot) {
-	        throw makeKnownError(ERROR_APP_RESOURCE_DOESNT_EXIST, new Error("basic_scatterplot function isn't defined"));
-	      }
-
-	      return basic_scatterplot(data);
-	    },
-	    // Iterating through the report graphics
-	    iterationData: iteration_data_xy,
-	    iterationTitles: iteration_titles_xy,
-	    // Handling query vars for single plot
-	    makeQueryVars: make_query_vars_xy,
-	    parseQueryVars: parse_vars_xy,
-	    // Making the single plot
-	    plotData: plot_data_xy,
-	    plotTitle: plot_title_xy
-	  }
-	};
-
 	// Header buttons
 
-	var top_left_options = document.getElementById("left-top-options"),
-	    back_button = document.getElementById("plot-back-button"); // Loading plot
+	var top_left_options = document.getElementById("left-top-options"); // Loading plot
 
 	var processing = document.getElementById("plot-processing"),
 	    loader = document.getElementById("plot-loader");
@@ -3679,19 +3692,9 @@
 	    sheet = qvars.get("sheet"),
 	    plot_number = qvars.get("pn"),
 	    visualization = qvars.get("v");
-	console.log("[spreadsheet " + id$1 + "]", "[sheet " + sheet + "]", "[plot number " + plot_number + "]", "[visualization " + visualization + "]"); // Setup the modals ---------------------------
+	console.log("[spreadsheet " + id$1 + "]", "[sheet " + sheet + "]", "[plot number " + plot_number + "]", "[visualization " + visualization + "]"); // Setup the top nav bar ----------------------
 
-	setup_modals([{
-	  button: document.getElementById("saved-reports-button"),
-	  container: document.getElementById("saved-reports-popup"),
-	  popup: document.getElementById("saved-reports-popup").querySelector(".popup"),
-	  close: document.getElementById("saved-reports-popup").querySelector(".popup-close")
-	}, {
-	  button: document.getElementById("settings-button"),
-	  container: document.getElementById("settings-popup"),
-	  popup: document.getElementById("settings-popup").querySelector(".popup"),
-	  close: document.getElementById("settings-popup").querySelector(".popup-close")
-	}]); // Setup the drop downs -----------------------
+	setup_top_nav(); // Setup the drop downs -----------------------
 
 	setup_dropdowns([{
 	  button: document.getElementById("customize-button"),
@@ -3714,12 +3717,10 @@
 	  var svg = actual_plot.querySelector("svg");
 	  download_png(svg, visualization);
 	}); // Implement back button ------------------------
-
-	back_button.onclick = function (event) {
-	  // Go to the report page
-	  window.location.href = "report?id=" + id$1;
-	}; // Load the visualization from a tab ------------
-
+	//back_button.onclick = function(event) {
+	//  window.location.href = "report?id=" + id;
+	//};
+	// Load the visualization from a tab ------------
 
 	var request_channel = new BroadcastChannel("request_channel:" + id$1 + ":" + sheet),
 	    request_timeout = null;
@@ -3775,7 +3776,6 @@
 	    return showLoadingKnownIssue(ISSUE_URL_NO_SPREADSHEET_ID);
 	  }
 
-	  back_button.classList.remove("invisible");
 	  plot.classList.remove("invisible");
 	}
 
@@ -3863,55 +3863,53 @@
 	            return _context.abrupt("return", showLoadingKnownIssue(ISSUE_URL_NO_SPREADSHEET_ID));
 
 	          case 4:
-	            back_button.classList.remove("invisible");
-
 	            if (sheet) {
-	              _context.next = 7;
+	              _context.next = 6;
 	              break;
 	            }
 
 	            return _context.abrupt("return", showLoadingKnownIssue(ISSUE_URL_NO_SPREADSHEET_SHEET));
 
-	          case 7:
+	          case 6:
 	            if (visualization) {
-	              _context.next = 9;
+	              _context.next = 8;
 	              break;
 	            }
 
 	            return _context.abrupt("return", showLoadingKnownIssue(ISSUE_URL_NO_VISUALIZATION));
 
-	          case 9:
+	          case 8:
 	            if (visualizations.hasOwnProperty(visualization)) {
-	              _context.next = 11;
+	              _context.next = 10;
 	              break;
 	            }
 
 	            return _context.abrupt("return", showLoadingKnownIssue(ISSUE_URL_VISUALIZATION_NOT_SUPPORTED));
 
-	          case 11:
+	          case 10:
 	            loader.classList.remove("hidden"); // This should go away when I switch to one template per
 	            // visualization type
 
 	            vspec = visualizations[visualization];
-	            _context.prev = 13;
-	            _context.next = 16;
+	            _context.prev = 12;
+	            _context.next = 15;
 	            return __load_visualization(vspec);
 
-	          case 16:
-	            _context.next = 21;
+	          case 15:
+	            _context.next = 20;
 	            break;
 
-	          case 18:
-	            _context.prev = 18;
-	            _context.t0 = _context["catch"](13);
+	          case 17:
+	            _context.prev = 17;
+	            _context.t0 = _context["catch"](12);
 	            showBug(STEP_UNKNOWN, _context.t0);
 
-	          case 21:
+	          case 20:
 	          case "end":
 	            return _context.stop();
 	        }
 	      }
-	    }, _callee, null, [[13, 18]]);
+	    }, _callee, null, [[12, 17]]);
 	  }));
 	  return _load_from_scratch.apply(this, arguments);
 	}

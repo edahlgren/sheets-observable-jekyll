@@ -291,11 +291,12 @@ function set_title(title, url) {
 function plots_container() {
   var div = document.createElement("div");
   div.classList.add("report-plots-container");
+  div.classList.add("wrapper-lg");
   return div;
 }
 
 function choose_n(num_iterations) {
-  return 4;
+  return 5;
 }
 
 function format_plot(plot_number, url, n, titles, svg) {
