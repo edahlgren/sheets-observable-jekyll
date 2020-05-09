@@ -1,0 +1,11 @@
+Field,Description,Caption,Type,Distribution,TotalUnique,Avg,Min,Max
+year,Year,Year,date,grouped,5,,2011,2015
+state,State,State,us-state,grouped,51,,,
+region,Region,Region,us-region,grouped,4,,,
+diabetes,Diabetes,Percent with diabetes,percent,random,67,9.850588235,6.5,14.7
+kidney_disease,Kidney disease,Percent with kidney disease,percent,random,25,2.625490196,1.5,5
+pulmonary_disease,Pulmonary disease,Percent with pulmonary disease,percent,random,69,6.560784314,3.6,13.5
+obese,Obese,Percent obese,percent,random,115,28.53803922,20.2,36.2
+no_leisure,No leisure,Percent without leisure exercise,percent,random,126,24.69490196,16.3,38.1
+overweight,Overweight,Percent overweight,percent,random,110,64.04235294,51.9,71.1
+healthy_weight,Healthy weight,Percent with healthy weight,percent,random,112,34.12627451,26.9,46

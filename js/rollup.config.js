@@ -1,3 +1,4 @@
+import { readdirSync, copyFileSync } from 'fs';
 import babel from 'rollup-plugin-babel';
 import resolve from '@rollup/plugin-node-resolve';
 import commonjs from '@rollup/plugin-commonjs';
@@ -6,6 +7,7 @@ var plugins = [
   babel({
     babelrc: false,
     exclude: "node_modules/**",
+    plugins: ["transform-html-import-to-string"],
     presets: [
       [
         "@babel/preset-env",
@@ -24,12 +26,23 @@ var plugins = [
   commonjs(),
 ];
 
-export default [
+var config = [
   {
     input: "./src/runtime.js",
     output: [
       {
         file: "../assets/js/runtime.js",
+        format: "iife",
+        name: "app"
+      },
+    ],
+    plugins: plugins
+  },
+  {
+    input: "./src/runtime-config.js",
+    output: [
+      {
+        file: "../assets/js/runtime-config.js",
         format: "iife",
         name: "app"
       },
@@ -48,7 +61,7 @@ export default [
     plugins: plugins
   },
   {
-    input: "./src/report/index.js",
+    input: "./src/report/indexStatic.js",
     output: [
       {
         file: "../assets/js/report.js",
@@ -70,14 +83,47 @@ export default [
     plugins: plugins
   },
   {
-    input: "./src/plots/basic-scatterplot.js",
+    input: "./src/templates/correlation-1/index.js",
     output: [
       {
-        file: "../assets/plots/basic-scatterplot.js",
+        file: "../assets/js/templates/correlation-1.js",
         format: "iife",
         name: "app"
       },
     ],
     plugins: plugins
-  },
+  }
 ];
+
+var notebooks = readdirSync("./src/notebooks");
+notebooks.forEach(function(entry) {
+  if (entry.endsWith(".js")) {
+    config.push({
+      input: "./src/notebooks/" + entry,
+      output: [
+        {
+          file: "../assets/plots/" + entry,
+          format: "iife",
+          name: "app"
+        },
+      ],
+      plugins: plugins
+    });
+  }
+});
+
+var notebooks = readdirSync("./src/notebooks/code/files");
+notebooks.forEach(function(entry) {
+  if (entry.endsWith(".json")) {
+    copyFileSync(
+      // source
+      "./src/notebooks/code/files/" + entry,
+      // target
+      "../assets/plots/files/" + entry
+    );
+  }
+});
+
+console.log("config", config);
+
+export default config;

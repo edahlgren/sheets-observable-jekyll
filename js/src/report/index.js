@@ -3,12 +3,16 @@
 import { makeSpreadsheetUrl, getGoogleApi } from "../google.js";
 import { setupTopNav } from "../top-nav.js";
 import { setupDropdowns } from "../dropdowns.js";
+import { staticTests } from "../static.js";
+import { bestReport } from "../reports/index.js";
 
 import {
+  ISSUE_SPREADSHEET_DOESNT_EXIST,
   ISSUE_SPREADSHEET_ACCESS,
   ISSUE_NO_FIELDS_SHEET,
   ISSUE_BAD_FIELDS_SHEET,
   ISSUE_FIELDS_SHEET_SYNC,
+  ISSUE_NO_TEST_DATA,
   isAuthIssue,
   showLoadingKnownIssue,
   showLoadingBug
@@ -18,8 +22,10 @@ import {
   choose_single_sheet,
   organize_fields,
   load_designs,
+  load_designs2,
   match_header_to_fields,
-  render_visualizations
+  render_visualizations,
+  render_visualizations2
 } from "./processing.js";
 
 // DOM ----------------------------------------
@@ -28,15 +34,27 @@ import {
 var processing = document.getElementById("report-processing");
 var part1 = document.getElementById("report-loader-part1"),
     load_part1_bar = part1.querySelector(".report-loader-bar-complete"),
-    load_part1_desc = part1.querySelector(".report-loader-part-desc");
+    load_part1_desc = part1.querySelector(".report-loader-part-desc"),
+    loader_part1 = {
+      bar: load_part1_bar,
+      desc: load_part1_desc
+    };
 
 var part2 = document.getElementById("report-loader-part2"),
     load_part2_bar = part2.querySelector(".report-loader-bar-complete"),
-    load_part2_desc = part2.querySelector(".report-loader-part-desc");
+    load_part2_desc = part2.querySelector(".report-loader-part-desc"),
+    loader_part2 = {
+      bar: load_part2_bar,
+      desc: load_part2_desc
+    };
 
 var part3 = document.getElementById("report-loader-part3"),
     load_part3_bar = part3.querySelector(".report-loader-bar-complete"),
-    load_part3_desc = part3.querySelector(".report-loader-part-desc");
+    load_part3_desc = part3.querySelector(".report-loader-part-desc"),
+    loader_part3 = {
+      bar: load_part3_bar,
+      desc: load_part3_desc
+    };
 
 // Sign in message
 var authorize_message = document.getElementById("authorize-container"),
@@ -71,7 +89,185 @@ setupDropdowns([
 var request_channel = null,
     response_channels = new Map();
 
-// Define the processing steps ---------------
+// Error handling -----------------------------
+
+function showIssue(step, error) {
+  if (!showLoadingKnownIssue(null, error)) {
+    showLoadingBug(stepToString(step), error);
+  }
+}
+
+function showBug(step, error) {
+  showLoadingBug(stepToString(step), error);
+}
+
+// Execute ------------------------------------
+
+// TODO: Cancel and re-process on submitting new URL
+go();
+
+function go() {
+  var spreadsheetId = get_id();
+  if (spreadsheetId) {
+    processGoogle(spreadsheetId, STEP_BEFORE_AUTH);
+    return;
+  }
+
+  var testId = get_test();
+  if (testId) {
+    processStatic(testId);
+    return;
+  }
+
+  showLoadingKnownIssue(ISSUE_SPREADSHEET_DOESNT_EXIST);
+}
+
+// Initialize top bar ------------------------
+
+function query_var(variable) {
+  var query = window.location.search.substring(1);
+  var vars = query.split('&');
+  for (var i = 0; i < vars.length; i++) {
+      var pair = vars[i].split('=');
+      if (decodeURIComponent(pair[0]) == variable) {
+          return decodeURIComponent(pair[1]);
+      }
+  }
+  return "";
+}
+
+function get_id() {
+  var id = query_var("id");
+  if (id.length == 0) {
+    return null;
+  }
+  return id;
+}
+
+function get_test() {
+  var test = query_var("test");
+  if (test.length == 0) {
+    return null;
+  }
+  return test;
+}
+
+// Actally do processing steps ---------------
+
+async function processStatic(testId) {
+  console.log("processing test [" + testId + "]");
+
+  if (!staticTests.hasOwnProperty(testId)) {
+    showLoadingKnownIssue(ISSUE_NO_TEST_DATA);
+    return;
+  }
+
+  var spec = staticTests[testId],
+      fields = null,
+      data = null,
+      designs = null;
+
+  // Try to download the fields metadata
+  load_part1_desc.textContent = "Reading spreadsheet fields";
+  try {
+    var response = await fetch(spec.fieldsFile);
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+    var text = await response.text();
+    fields = text.split('\n').map(function(d) {
+      return d.split(',').map(function(d0) { return d0.trim(); });
+    });
+  } catch (error) {
+    console.error(error);
+    showIssue(STEP_DOWNLOAD_FIELDS, error);
+    return;
+  }
+  load_part1_bar.style.width = 30 + "%";
+
+  // Try to download the data
+  load_part1_desc.textContent = "Reading spreadsheet data";
+  try {
+    var response = await fetch(spec.dataFile);
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+    var text = await response.text();
+    data = text.split('\n').map(function(d) {
+      return d.split(',').map(function(d0) { return d0.trim(); });
+    });
+  } catch (error) {
+    console.error(error);
+    showIssue(STEP_DOWNLOAD_DATA, error);
+    return;
+  }
+  load_part1_bar.style.width = 60 + "%";
+
+  // Validating
+  load_part1_desc.textContent = "Checking consistency";
+  try {
+    fields = organize_fields(fields);
+    if (fields.isMalformed) {
+      showLoadingKnownIssue(ISSUE_BAD_FIELDS_SHEET);
+      return;
+    }
+  } catch (error) {
+    console.error(error);
+    showBug(STEP_ORGANIZE_FIELDS, error);
+    return;
+  }
+  try {
+    fields = match_header_to_fields(fields, data[0]);
+    if (!fields) {
+      showLoadingKnownIssue(ISSUE_FIELDS_SHEET_SYNC);
+      return;
+    }
+  } catch (error) {
+    console.error(error);
+    showBug(STEP_MATCH_FIELDS, error);
+    return;
+  }
+  load_part1_bar.style.width = 100 + "%";
+
+  // Part 2 --------------------------------------
+
+  try {
+    designs = await load_designs2(fields, {
+      bar: load_part2_bar,
+      desc: load_part2_desc
+    });
+  } catch (error) {
+    console.error(error);
+    showIssue(STEP_CHOOSE_VISUALIZATIONS, error);
+    return;
+  }
+
+  // Part 3 --------------------------------------
+
+  var render_config = {
+    root: report,
+    identifier: `test=${testId}`,
+    title: spec.name,
+    url: spec.dataFile,
+    fields: fields,
+    visualizations: designs,
+    data: data
+  };
+  try {
+    await render_visualizations2(render_config, {
+      bar: load_part3_bar,
+      desc: load_part3_desc
+    });
+  } catch (error) {
+    console.error(error);
+    showIssue(STEP_MAKE_VISUALIZATIONS, error);
+    return;
+  }
+
+  finish("test", testId);
+}
+
+// Define the Google processing steps ---------------
 
 const STEP_BEFORE_AUTH = 0,
       STEP_AFTER_AUTH = 1,
@@ -111,49 +307,7 @@ function stepToString(step) {
   }
 }
 
-// Execute ------------------------------------
-
-// TODO: Cancel and re-process on submitting new URL
-var spreadsheetId = refresh_id();
-if (spreadsheetId) {
-  process(spreadsheetId, STEP_BEFORE_AUTH);
-}
-
-// Initialize top bar ------------------------
-
-function query_var(variable) {
-  var query = window.location.search.substring(1);
-  var vars = query.split('&');
-  for (var i = 0; i < vars.length; i++) {
-      var pair = vars[i].split('=');
-      if (decodeURIComponent(pair[0]) == variable) {
-          return decodeURIComponent(pair[1]);
-      }
-  }
-  return "";
-}
-
-function refresh_id() {
-  var id = query_var("id");
-  if (id.length == 0) {
-    return null;
-  }
-  return id;
-}
-
-// Actally do processing steps ---------------
-
-function showIssue(step, error) {
-  if (!showLoadingKnownIssue(null, error)) {
-    showLoadingBug(stepToString(step), error);
-  }
-}
-
-function showBug(step, error) {
-  showLoadingBug(stepToString(step), error);
-}
-
-async function process(id, firstStep) {
+async function processGoogle(id, firstStep) {
   console.log("processing [" + id + "]");
 
   var api = null,
@@ -268,7 +422,7 @@ async function process(id, firstStep) {
   // Part 2 --------------------------------------
 
   try {
-    designs = await load_designs(fields, {
+    designs = await load_designs2(fields, {
       bar: load_part2_bar,
       desc: load_part2_desc
     });
@@ -281,8 +435,7 @@ async function process(id, firstStep) {
 
   var render_config = {
     root: report,
-    id: id,
-    sheet: sheet,
+    identifier: `id=${id}&sheet=${sheet}`,
     title: metadata.properties.title,
     url: metadata.spreadsheetUrl,
     fields: fields,
@@ -290,7 +443,7 @@ async function process(id, firstStep) {
     data: data
   };
   try {
-    await render_visualizations(render_config, {
+    await render_visualizations2(render_config, {
       bar: load_part3_bar,
       desc: load_part3_desc
     });
@@ -303,7 +456,7 @@ async function process(id, firstStep) {
 }
 
 function finish(id, sheet) {
-  request_channel = new BroadcastChannel("request_channel:" + spreadsheetId + ":" + sheet);
+  request_channel = new BroadcastChannel("request_channel:" + id + ":" + sheet);
   request_channel.onmessage = handle_channel_request;
 
   processing.classList.add("hidden");

@@ -63,6 +63,17 @@ function query_vars() {
         decodeURIComponent(pair[1])
       );
   }
+  return {
+    map: vars_map,
+    get: function(name) {
+      var v = vars_map.get(name);
+      if (!v) {
+        var error = new Error("Need query string variable '" + name + "'");
+        throw makeKnownError(ERROR_WITH_PLOT_URL, error);
+      }
+      return v;
+    }
+  }
   return vars_map;
 }
 

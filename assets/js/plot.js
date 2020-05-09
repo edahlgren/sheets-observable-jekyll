@@ -2857,7 +2857,8 @@
 	    ISSUE_URL_NO_VISUALIZATION = 14,
 	    ISSUE_URL_VISUALIZATION_NOT_SUPPORTED = 15,
 	    ISSUE_URL_PLOT_GENERAL = 16,
-	    ISSUE_URL_PLOT_DOESNT_MATCH_DATA = 17;
+	    ISSUE_URL_PLOT_DOESNT_MATCH_DATA = 17,
+	    ISSUE_NO_TEST_DATA = 18;
 
 	function errorToString(error_code) {
 	  switch (error_code) {
@@ -2962,6 +2963,9 @@
 
 	    case ISSUE_URL_PLOT_DOESNT_MATCH_DATA:
 	      return "It looks like some of columns in this spreadsheet were renamed or removed so this visualization can't be generated anymore. The best thing to do is to click 'Back to Report' and refresh the page to regenerate the report so all visualizations are based on what the spreadsheet looks right now.";
+
+	    case ISSUE_NO_TEST_DATA:
+	      return "There's no test data for this test id. Try using 'diseases' instead.";
 
 	    default:
 	      return "";

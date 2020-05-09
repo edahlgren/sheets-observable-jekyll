@@ -34,7 +34,8 @@ const ISSUE_GOOGLE_FILE = 0,
       ISSUE_URL_NO_VISUALIZATION = 14,
       ISSUE_URL_VISUALIZATION_NOT_SUPPORTED = 15,
       ISSUE_URL_PLOT_GENERAL = 16,
-      ISSUE_URL_PLOT_DOESNT_MATCH_DATA = 17;
+      ISSUE_URL_PLOT_DOESNT_MATCH_DATA = 17,
+      ISSUE_NO_TEST_DATA = 18;
 
 function errorToString(error_code) {
   switch (error_code) {
@@ -110,6 +111,8 @@ function issueToString(issue_code) {
     return "It looks like there's something wrong with the url above. This can happen if you accidently changed the url above or if you opened a broken link. The best thing to do is to click 'Back to Report' and try selecting this visualization again.";
   case ISSUE_URL_PLOT_DOESNT_MATCH_DATA:
     return "It looks like some of columns in this spreadsheet were renamed or removed so this visualization can't be generated anymore. The best thing to do is to click 'Back to Report' and refresh the page to regenerate the report so all visualizations are based on what the spreadsheet looks right now.";
+  case ISSUE_NO_TEST_DATA:
+    return "There's no test data for this test id. Try using 'diseases' instead.";
   default:
     return "";
   }
@@ -238,6 +241,7 @@ export { ERROR_PLOT_URL_DOESNT_MATCH_DATA as ERROR_PLOT_URL_DOESNT_MATCH_DATA };
 
 // Export message codes
 export { ISSUE_SPREADSHEET_ACCESS as ISSUE_SPREADSHEET_ACCESS };
+export { ISSUE_SPREADSHEET_DOESNT_EXIST as ISSUE_SPREADSHEET_DOESNT_EXIST };
 export { ISSUE_NO_FIELDS_SHEET as ISSUE_NO_FIELDS_SHEET };
 export { ISSUE_BAD_FIELDS_SHEET as ISSUE_BAD_FIELDS_SHEET };
 export { ISSUE_FIELDS_SHEET_SYNC as ISSUE_FIELDS_SHEET_SYNC };
@@ -246,6 +250,7 @@ export { ISSUE_URL_NO_SPREADSHEET_ID as ISSUE_URL_NO_SPREADSHEET_ID };
 export { ISSUE_URL_NO_SPREADSHEET_SHEET as ISSUE_URL_NO_SPREADSHEET_SHEET };
 export { ISSUE_URL_NO_VISUALIZATION as ISSUE_URL_NO_VISUALIZATION };
 export { ISSUE_URL_VISUALIZATION_NOT_SUPPORTED as ISSUE_URL_VISUALIZATION_NOT_SUPPORTED };
+export { ISSUE_NO_TEST_DATA as ISSUE_NO_TEST_DATA };
 
 // Export helpers
 export { isAuthIssue as isAuthIssue };
