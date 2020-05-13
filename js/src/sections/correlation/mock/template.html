@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width">
+    <title>Mock Correlation Section</title>
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,300i,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    {{#styles}}
+    <link rel="stylesheet" type="text/css" href="{{{.}}}">
+    {{/styles}}
+    <link rel="stylesheet" type="text/css" href="/styles/main.css">
+  </head>
+
+  <body>
+    <div class="section">
+      <div class="flex-between">
+        <h2>Correlation <span class="subh2">How columns in your spreadsheet are related</span></h2> <hr>
+      </div>
+
+      {{#content}}
+      <div class="template">{{{.}}}</div>
+      {{/content}}
+    </div>
+  </body>
+</html>

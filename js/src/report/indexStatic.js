@@ -5,7 +5,7 @@ import { setupDropdowns } from "../dropdowns.js";
 import { staticTests } from "../static.js";
 import { loaderPart1, loaderPart2, loaderPart3 } from "./loaders.js";
 import { getQueryVar } from "../query_vars.js";
-import { choose_single_sheet, organize_fields, match_header_to_fields} from "./processing.js";
+import { choose_single_sheet, organize_fields, match_header_to_fields} from "./processingStatic.js";
 import { bestReport } from "../reports/index.js";
 import {
   ISSUE_SPREADSHEET_DOESNT_EXIST,
@@ -66,11 +66,11 @@ async function processStatic(testId) {
       reportRoot = null;
 
   console.log("processing test [" + testId + "]");
-
   if (!staticTests.hasOwnProperty(testId)) {
     showLoadingKnownIssue(ISSUE_NO_TEST_DATA);
     return;
   }
+  var spec = staticTests[testId];
 
   // Step 1: Load the spreadsheet fields and data
   loaderPart1.desc.textContent = "Reading spreadsheet fields";
@@ -133,26 +133,28 @@ async function processStatic(testId) {
   loaderPart1.bar.style.width = 100 + "%";
 
   // Step 2: Choose visualizations
-  loader_part2.desc.textContent = "Choosing visualizations";
-  loader_part2.bar.style.width = 20 + "%";
+  loaderPart2.desc.textContent = "Choosing visualizations";
+  loaderPart2.bar.style.width = 20 + "%";
   try {
     report = bestReport(fields);
     if (!report) {
       showIssue(STEP_CHOOSE_VISUALIZATIONS, new Error("No report for data"));
     }
   } catch (error) {
-    showBug(STEP_ORGANIZE_FIELDS, error);
+    console.error(error);
+    showBug(STEP_CHOOSE_VISUALIZATIONS, error);
     return;
   }
-  loader_part2.bar.style.width = 100 + "%";
+  loaderPart2.bar.style.width = 100 + "%";
 
   // Step 3: Make the visualizations
   try {
-    reportRoot = report.make(fields, data, loader_part3);
-    if (!root) {
+    reportRoot = await report.make(fields, data.slice(1), loaderPart3);
+    if (!reportRoot) {
       showIssue(STEP_MAKE_VISUALIZATIONS, new Error("No root"));
     }
   } catch (error) {
+    console.error(error);
     showBug(STEP_MAKE_VISUALIZATIONS, error);
     return;
   }
@@ -163,8 +165,46 @@ async function processStatic(testId) {
   reportLink.href = spec.dataFile;
 
   // Step 5: Reveal
-  processing.classList.add("hidden");
+  processingView.classList.add("hidden");
   reportContainer.classList.remove("invisible");
+}
+
+const STEP_BEFORE_AUTH = 0,
+      STEP_AFTER_AUTH = 1,
+      STEP_GET_METADATA = 2,
+      STEP_CHOOSE_SHEET = 3,
+      STEP_DOWNLOAD_FIELDS = 4,
+      STEP_DOWNLOAD_DATA = 5,
+      STEP_ORGANIZE_FIELDS = 6,
+      STEP_MATCH_FIELDS = 7,
+      STEP_CHOOSE_VISUALIZATIONS = 8,
+      STEP_MAKE_VISUALIZATIONS = 9;
+
+function stepToString(step) {
+  switch (step) {
+  case STEP_BEFORE_AUTH:
+    return "Before authorization";
+  case STEP_AFTER_AUTH:
+    return "After authorization";
+  case STEP_GET_METADATA:
+    return "Getting spreadsheet metadata";
+  case STEP_CHOOSE_SHEET:
+    return "Choosing sheet";
+  case STEP_DOWNLOAD_FIELDS:
+    return "Downloading fields";
+  case STEP_DOWNLOAD_DATA:
+    return "Downloading data";
+  case STEP_ORGANIZE_FIELDS:
+    return "Organizing fields";
+  case STEP_MATCH_FIELDS:
+    return "Matching header to fields";
+  case STEP_CHOOSE_VISUALIZATIONS:
+    return "Choosing visualizations";
+  case STEP_MAKE_VISUALIZATIONS:
+    return "Making visualizations";
+  default:
+    return "unknown";
+  }
 }
 
 function showIssue(step, error) {

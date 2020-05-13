@@ -22,8 +22,6 @@ var part3 = document.getElementById("report-loader-part3"),
       desc: load_part3_desc
     };
 
-export default {
-  loaderPart1: loader_part1,
-  loaderPart2: loader_part2,
-  loaderPart3: loader_part3
-};
+export { loader_part1 as loaderPart1 };
+export { loader_part2 as loaderPart2 };
+export { loader_part3 as loaderPart3 };

@@ -16,7 +16,7 @@ export default {
       data: df,
       columns: ctx.columns
     };
-    return lib.runNotebook(notebook, cfg, "chart");
+    return lib.runNotebook(notebook, config, "chart");
   },
   checkContext: function(fields, ctx) {
     return lib.validateFields(fields, ctx.columns);
@@ -37,4 +37,4 @@ export default {
 }
 
 const notebookUrl = "https://observablehq.com/d/671762263456aced";
-export { notebookURL };
+//export { notebookURL };

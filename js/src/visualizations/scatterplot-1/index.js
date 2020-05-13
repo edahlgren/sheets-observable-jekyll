@@ -20,7 +20,7 @@ export default {
       labelX: fields.get(ctx.x).description,
       labelY: fields.get(ctx.y).description
     };
-    return lib.runNotebook(notebook, cfg, "chart");
+    return lib.runNotebook(notebook, config, "chart");
   },
   checkContext: function(fields, ctx) {
     return lib.validateFields(fields, [ctx.x, ctx.y]);
@@ -41,4 +41,4 @@ export default {
 }
 
 const notebookUrl = "https://observablehq.com/d/e172324391f49fb8";
-export { notebookURL };
+//export { notebookURL };

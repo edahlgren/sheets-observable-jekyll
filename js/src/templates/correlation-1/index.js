@@ -14,8 +14,8 @@ export default {
   },
   compile: function(svgRoots) {
     var root = lib.parseTemplate(template);
-    var matrix = root.getElementById("matrix");
-    matrix.appendChild(svgRoots[0]);
+    var object = root.querySelector(".contains-object");
+    object.appendChild(svgRoots[0]);
     return root;
   }
 }

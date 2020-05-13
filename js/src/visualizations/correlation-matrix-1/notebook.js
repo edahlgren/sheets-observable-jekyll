@@ -1,6 +1,6 @@
 // https://observablehq.com/d/671762263456aced@190
-import define1 from "./9821d94b209bcc62@6.js";
-import define2 from "./3f2a225750ecdcdd@60.js";
+import define1 from "../shared-notebooks/9821d94b209bcc62@6.js";
+import define2 from "../shared-notebooks/3f2a225750ecdcdd@60.js";
 
 export default function define(runtime, observer) {
   const main = runtime.module();
@@ -34,7 +34,7 @@ function() {
   if (config.data.length == 0) {
     return d3.create("svg");
   }
-  
+
   var { margin, w, h, fw, fh } = getDimensions();
 
   var correlations = correlationMatrix(config.data, config.columns),

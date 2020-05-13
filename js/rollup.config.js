@@ -70,7 +70,8 @@ var config = [
       },
     ],
     plugins: plugins
-  },
+  }
+  /**
   {
     input: "./src/plot/index.js",
     output: [
@@ -92,9 +93,10 @@ var config = [
       },
     ],
     plugins: plugins
-  }
+  }**/
 ];
 
+/**
 var notebooks = readdirSync("./src/notebooks");
 notebooks.forEach(function(entry) {
   if (entry.endsWith(".js")) {
@@ -123,6 +125,7 @@ notebooks.forEach(function(entry) {
     );
   }
 });
+**/
 
 console.log("config", config);
 

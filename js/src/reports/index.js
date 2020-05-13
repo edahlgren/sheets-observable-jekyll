@@ -20,34 +20,89 @@ function bestReport(fields) {
 }
 
 function enableMake(report) {
-  report.make = function(fields, data, progress) {
+  report.make = async function(fields, data, progress) {
     return make(report, fields, data, progress);
   };
   return report;
 }
 
-function make(report, fields, data, progress) {
-  var sections = report.sections(fields);
-  var sectionRoots = sections.map(function(section) {
-    return makeSection(template, fields, data, progress);
-  });
+async function make(report, fields, data, progress) {
+  progress.desc.textContent = "Finding best variations to show";
+  var all = getVariations(report, fields);
+  progress.bar.style.width = "20%";
+
+  var sections = all.sections,
+      total = all.total,
+      bands = progressBands(20, total),
+      i = 0;
+
+  console.log("total variations", total);
+
+  var sectionRoots = [];
+  for (var j = 0; j < sections.length; j++) {
+    var templates = sections[j].templates,
+        section = sections[j].section;
+
+    var templateRoots = [];
+    for (var k = 0; k < templates.length; k++) {
+      var variations = templates[k].variations,
+          template = templates[k].template;
+
+      var svgRoots = [];
+      for (var l = 0; l < variations.length; l++) {
+        var ctx = variations[l];
+
+        // Make visualization
+        var svgRoot = await template.visualization.make(fields, data, ctx);
+        svgRoots.push(svgRoot);
+
+        // Increment progress bar
+        progress.desc.textContent = (i+1) + "/" + total;
+        progress.bar.style.width = (i+1 == total ? 100 : bands[i]) + "%";
+        i += 1;
+      }
+
+      // Make template
+      var templateRoot = template.compile(svgRoots);
+      templateRoots.push(templateRoot);
+    }
+
+    // Make section
+    var sectionRoot = section.compile(templateRoots);
+    sectionRoots.push(sectionRoot);
+  }
+
+  // Make report
   return report.compile(sectionRoots);
 }
 
-function makeSection(section, fields, data, progress) {
-  var templates = section.templates(fields);
-  var templateRoots = templates.map(function(template) {
-    return makeTemplate(template, fields, data, progress);
+function getVariations(report, fields) {
+  var sections = report.sections(fields);
+  var total = 0;
+
+  var ss = sections.map(function(section) {
+    var templates = section.templates(fields);
+    var ts = templates.map(function(template) {
+      var variations = template.variations(fields);
+      total += variations.length;
+      return {
+        template: template,
+        variations: variations
+      };
+    });
+    return { section: section, templates: ts };
   });
-  return section.compile(templateRoots);
+
+  return { sections: ss, total: total };
 }
 
-function makeTemplate(template, fields, data, progress) {
-  var variations = template.variations(fields);
-  var svgRoots = variations.map(function(ctx) {
-    return template.visualization.make(fields, data, ctx);
-  });
-  return template.compile(svgRoots);
+function progressBands(start, total) {
+  var bandwidth = (1.0 * (100 - start)) / (1.0 * total);
+  var bands = [];
+  for (var i = 0; i < total; i++) {
+    bands.push(Math.floor(start + ((i+1) * bandwidth)));
+  }
+  return bands;
 }
 
 export { bestReport as bestReport };

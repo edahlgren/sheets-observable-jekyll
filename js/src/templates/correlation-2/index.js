@@ -18,13 +18,13 @@ export default {
     // TODO: add data-correlation property to svg to
     // showcase the variables with the highest correlation
     var root = lib.parseTemplate(template);
-    var primary = root.getElementById("primary-scatterplot");
-    var secondaries = root.getElementsByClassName("secondary-scatterplot");
-
-    primary.appendChild(svgRoots[0]);
-    svgRoots.slice(1).forEach(function(svgRoot, i) {
-      secondaries[i].appendChild(svgRoot);
-      secondaries[i].classList.remove("hide");
+    var objects = root.querySelectorAll(".contains-object");
+    objects.forEach(function(object, i) {
+      if (i >= svgRoots.length) {
+        return;
+      }
+      object.appendChild(svgRoots[i]);
+      object.classList.remove("hide");
     });
     return root;
   }

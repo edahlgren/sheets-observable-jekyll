@@ -1,6 +1,6 @@
 // https://observablehq.com/d/e172324391f49fb8@105
-import define1 from "./9821d94b209bcc62@6.js";
-import define2 from "./bba258fd25367b55@16.js";
+import define1 from "../shared-notebooks/9821d94b209bcc62@6.js";
+import define2 from "../shared-notebooks/bba258fd25367b55@16.js";
 
 export default function define(runtime, observer) {
   const main = runtime.module();
@@ -9,7 +9,7 @@ md`# Scatterplot with loess regression`
 )});
   main.variable(observer("chart")).define("chart", ["make"], function(make)
 {
-  const svg = make(); 
+  const svg = make();
   return svg.node();
 }
 );
@@ -34,38 +34,38 @@ function() {
   if (config.data.length == 0) {
     return d3.create("svg");
   }
-  
+
   var { margin, w, h, fw, fh } = getDimensions();
-  
+
   var scaleX = makeScaleX(config.data, w),
       scaleY = makeScaleY(config.data, h),
       regression = makeRegression(config.data, scaleX, scaleY);
-  
+
   var svg = d3.create("svg")
     .attr("viewBox", [0, 0, fw, fh])
     .attr("color", "rgba(5, 5, 38, 0.5)");
-  
+
   var backgroundLayer = svg.append("g")
     .attr("transform", `translate(${margin.left},${margin.top - 15})`);
   makeBackground(backgroundLayer, w + 15, h + 15);
-  
+
   var axisX = svg.append("g")
     .attr("transform", `translate(${margin.left},${fh - margin.bottom})`);
   makeAxisX(axisX, scaleX, w, config.labelX);
-  
+
   var axisY = svg.append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
   makeAxisY(axisY, scaleY, config.labelY);
-  
+
   var pointsLayer = svg.append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
-  plotPoints(pointsLayer, config.data, regression.correlated, 
+  plotPoints(pointsLayer, config.data, regression.correlated,
              scaleX, scaleY, scaleColor);
-  
+
   var lineLayer = svg.append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
   makeRegressionLine(lineLayer, regression, scaleColor);
-  
+
   return svg;
 }
 )});
@@ -162,10 +162,10 @@ function() {
   var margin = {top: 20, right: 30, bottom: 30, left: 40};
   var fw = 900,
       fh = 800;
-  
+
   return {
-    margin: margin, 
-    w: fw - margin.left - margin.right, 
+    margin: margin,
+    w: fw - margin.left - margin.right,
     h: fh - margin.top - margin.bottom,
     fw: fw, fh: fh
   };

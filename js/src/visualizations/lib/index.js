@@ -58,7 +58,7 @@ function filterByNumericVariables(fields, data, variables) {
       if (row[idx.index].length == 0) { // check for empty cells
         return null;
       }
-      m[i.key] = +row[idx.index];
+      m[idx.key] = +row[idx.index];
     }
     return m;
   }).filter(function(p) {
